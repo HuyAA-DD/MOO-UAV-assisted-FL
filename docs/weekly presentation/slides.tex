@@ -1,0 +1,1101 @@
+% !TeX program = xelatex
+% Biên dịch bằng XeLaTeX hai lần, hoặc: tectonic slides.tex
+% Template: HUST_PPT_template_2022_RED_4x3.pptx (nền và logo gốc).
+% Giữ thư mục assets/ cạnh slides.tex. Font Lato được đóng gói trong assets/fonts/.
+% Các sơ đồ là mã TikZ chỉnh sửa được; biểu đồ non-IID là ví dụ minh họa.
+% Phần II chứa đầy đủ (1)--(15) và các công thức không đánh số của Sec. II.
+% Giữ nguyên cách viết của paper, kể cả các điểm cần lưu ý về đơn vị/C7.
+\documentclass[10pt,aspectratio=43]{beamer}
+\usepackage[no-math]{fontspec}
+\setsansfont{Lato}[Path=assets/fonts/,Extension=.ttf,
+  UprightFont=*-Regular,BoldFont=*-Bold,ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic]
+\setmainfont{Lato}[Path=assets/fonts/,Extension=.ttf,
+  UprightFont=*-Regular,BoldFont=*-Bold,ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic]
+\usepackage{amsmath,amssymb,booktabs,tabularx,graphicx,tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\usefonttheme{professionalfonts}
+\definecolor{HustRed}{HTML}{C00000}
+\definecolor{HustBand}{HTML}{BE1E2D}
+\definecolor{HustGold}{HTML}{E7A000}
+\definecolor{Ink}{HTML}{292929}
+\definecolor{Muted}{HTML}{666666}
+\definecolor{Blue}{HTML}{2F6591}
+\setbeamercolor{normal text}{fg=Ink,bg=white}
+\setbeamercolor{structure}{fg=HustRed}
+\setbeamercolor{frametitle}{fg=white}
+\setbeamercolor{block title}{fg=HustRed,bg=white}
+\setbeamercolor{block body}{fg=Ink,bg=white}
+\setbeamerfont{block title}{series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{sections/subsections in toc}[sections numbered]
+\setbeamersize{text margin left=.55cm,text margin right=.55cm}
+\setbeamertemplate{background}{\includegraphics[width=\paperwidth,height=\paperheight]{assets/hust/content.png}}
+\setbeamertemplate{frametitle}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=west,text=white,inner sep=0pt,
+      font=\fontsize{13.4}{15}\selectfont\bfseries]
+      at ([xshift=.36cm,yshift=-.43cm]current page.north west){\insertframetitle};
+  \end{tikzpicture}\vspace{.81cm}}
+\setbeamertemplate{footline}{%
+  \hfill\textcolor{HustRed}{\fontsize{6.2}{7}\selectfont\insertframenumber/\inserttotalframenumber}
+  \hspace{.32cm}\vspace{.10cm}}
+% Chừa khoảng trắng cho logo và đường kẻ chân trang trong template gốc.
+\addtobeamertemplate{footline}{\vspace{.51cm}}{}
+\setlength{\parskip}{.25em}
+\newcommand{\source}[1]{\par\vfill{\fontsize{5.8}{7}\selectfont\color{Muted}Nguồn: #1\par}}
+\newcommand{\paperref}[1]{\source{Yang và cộng sự, Sec.~#1. Số công thức theo paper gốc.}}
+\newcommand{\flref}{\source{\href{https://cloud.google.com/discover/what-is-federated-learning}{Google Cloud, What is federated learning?}}}
+\newcommand{\eqmeaning}[1]{\par\medskip\textcolor{HustRed}{\textbf{Ý nghĩa:}} #1\par}
+\newcommand{\noteonly}[1]{\par{\footnotesize\color{Muted}#1\par}}
+\newcommand{\FL}{\mathrm{FL}}
+\newcommand{\tot}{\mathrm{total}}
+\newcommand{\Acc}{\mathrm{Acc}}
+\newcommand{\paperfile}{Federated_Spatio-Temporal_Policy_Learning_for_Efficient_Resource_Management_in_UAV-Assisted_IoT_Edge_Networks.pdf}
+\tikzset{
+  box/.style={draw=HustRed,fill=white,rounded corners=2pt,align=center,
+    minimum height=.75cm,inner sep=5pt,font=\small},
+  faint/.style={box,draw=Muted},
+  flow/.style={-{Latex[length=2mm]},line width=.7pt,draw=HustRed},
+  dataflow/.style={-{Latex[length=2mm]},line width=.7pt,draw=Blue},
+  lab/.style={font=\scriptsize,align=center,fill=white,inner sep=2pt}
+}
+\newcommand{\hustpartpage}[3]{%
+  {\setbeamertemplate{background}{\includegraphics[width=\paperwidth,height=\paperheight]{assets/hust/section.png}}
+  \begin{frame}[plain]
+    \vfill\centering
+    {\color{white}\fontsize{13}{16}\selectfont PHẦN #1\par}
+    \vspace{.45cm}
+    {\color{white}\fontsize{22}{27}\selectfont\bfseries #2\par}
+    \vspace{.45cm}
+    {\color{white}\normalsize #3\par}
+    \vfill
+  \end{frame}}
+}
+\hypersetup{pdftitle={Học liên kết và quản lý tài nguyên trong mạng IoT có UAV hỗ trợ},
+ pdfauthor={Tóm tắt bài báo của Xiaoteng Yang và cộng sự}}
+\begin{document}
+
+{\setbeamertemplate{background}{\includegraphics[width=\paperwidth,height=\paperheight]{assets/hust/cover.png}}
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+  \node[anchor=north west,inner sep=0pt] at ([xshift=.58cm,yshift=-.55cm]current page.north west)
+    {\includegraphics[width=3.4cm]{assets/hust/logo.png}};
+  \node[anchor=north west,text width=9.6cm,align=left,inner sep=0pt,text=HustRed,
+    font=\fontsize{18}{22}\selectfont\bfseries]
+    at ([xshift=.65cm,yshift=-1.95cm]current page.north west)
+    {HỌC LIÊN KẾT VÀ\\QUẢN LÝ TÀI NGUYÊN\\TRONG MẠNG IoT CÓ UAV};
+  \node[anchor=north west,text width=9.3cm,align=left,inner sep=0pt,text=HustRed,
+    font=\fontsize{10.5}{14}\selectfont]
+    at ([xshift=.65cm,yshift=-4.55cm]current page.north west)
+    {Federated Spatio-Temporal Policy Learning\\
+     for Efficient Resource Management in\\
+     UAV-Assisted IoT Edge Networks};
+  \node[anchor=north west,text width=8.5cm,align=left,inner sep=0pt,font=\footnotesize]
+    at ([xshift=.65cm,yshift=-6.35cm]current page.north west)
+    {Bài báo của Xiaoteng Yang và cộng sự\\
+     IEEE Internet of Things Journal, 2026 (bản tác giả)\\
+     \footnotesize DOI: \href{https://doi.org/10.1109/JIOT.2026.3727888}{10.1109/JIOT.2026.3727888}};
+\end{tikzpicture}
+\end{frame}}
+
+\begin{frame}[t]{NỘI DUNG}
+\relax
+\vspace{.35cm}
+\tableofcontents[hideallsubsections]
+\vspace{.65cm}
+\begin{itemize}
+  \setlength{\itemsep}{.65em}
+  \item Phần 1: FL, mô hình bài toán và mã giả FedAvg.
+  \item Phần 2: mô hình hệ thống và đầy đủ công thức (1)--(15).
+  \item Phần 3: sơ đồ FSTPO và các cơ chế chính.
+  \item Phần 4: hướng mở rộng dựa trên bản thảo JNCA.
+\end{itemize}
+\end{frame}
+
+\section{Giới thiệu về federated learning}
+\hustpartpage{1}{FEDERATED LEARNING}{Khái niệm, bài toán tối ưu và thuật toán FedAvg}
+
+\begin{frame}[t]{Federated learning là gì?}
+\relax
+Nhiều thiết bị cùng học một mô hình, giữ dữ liệu huấn luyện tại chỗ.
+\par\bigskip
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{@{}lYY@{}}
+\toprule
+ & \textbf{Tập trung} & \textbf{Liên kết (FL)}\\
+\midrule
+Dữ liệu & Tập hợp tại máy chủ & Lưu ở thiết bị\\
+Huấn luyện & Máy chủ thực hiện & Thiết bị thực hiện\\
+Trao đổi & Dữ liệu gốc & Trọng số/gradient\\
+\bottomrule
+\end{tabularx}
+\par\bigskip
+\textbf{Client:} giữ dữ liệu, huấn luyện.\\
+\textbf{Server:} điều phối, tổng hợp cập nhật.
+\flref
+\end{frame}
+
+\begin{frame}[t]{Một vòng học liên kết}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[box,text width=3cm] (server) at (5,3.4) {Máy chủ\\Mô hình chung $\mathbf w^{(r)}$};
+\node[box,text width=2.1cm] (a) at (1.3,0) {Client 1\\Dữ liệu $\mathcal D_1$};
+\node[box,text width=2.1cm] (b) at (5,0) {Client 2\\Dữ liệu $\mathcal D_2$};
+\node[box,text width=2.1cm] (c) at (8.7,0) {Client 3\\Dữ liệu $\mathcal D_3$};
+\draw[<->,>=Latex,HustRed,line width=.7pt] (server.west) -| node[lab,pos=.25,above]{1. Phát mô hình} (a.north);
+\draw[<->,>=Latex,HustRed,line width=.7pt] (server.south) -- (b.north);
+\draw[<->,>=Latex,Blue,line width=.7pt] (c.north) |- node[lab,pos=.75,above]{3. Gửi cập nhật} (server.east);
+\node[lab] at (5,-1) {2. Huấn luyện cục bộ};
+\node[lab] at (5,4.35) {4. Tổng hợp, bắt đầu vòng tiếp theo};
+\end{tikzpicture}
+\par\medskip
+\raggedright Chỉ cập nhật mô hình đi qua mạng; dữ liệu gốc ở client.
+\flref
+\end{frame}
+
+\begin{frame}[t]{FedAvg: ví dụ tổng hợp mô hình}
+\relax
+Với tập client tham gia $\mathcal S_r$, một cách lấy trung bình có trọng số là
+\[
+\mathbf w^{(r+1)}=\sum_{m\in\mathcal S_r}
+\frac{n_m}{\sum_{j\in\mathcal S_r}n_j}\,\mathbf w_m^{(r+1)}.
+\]
+\begin{itemize}
+\item $n_m$: số mẫu của client $m$; $\mathbf w_m^{(r+1)}$: tham số sau học cục bộ.
+\item Client có nhiều mẫu hơn có trọng số lớn hơn.
+\end{itemize}
+\par\medskip
+\textbf{Ví dụ minh họa với một tham số vô hướng:}
+\[
+n_1=100,\ w_1=2;\qquad n_2=300,\ w_2=4.
+\]
+\[
+w_{\text{mới}}=\tfrac{100}{400}\cdot2+\tfrac{300}{400}\cdot4=3.5.
+\]
+\source{McMahan và cộng sự, AISTATS 2017, FedAvg. Ví dụ số tự xây dựng, không phải kết quả paper UAV.}
+\end{frame}
+
+\begin{frame}[t]{Các dạng federated learning}
+\relax
+\renewcommand{\arraystretch}{1.6}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.0cm}YY@{}}
+\toprule
+\textbf{Dạng} & \textbf{Mẫu dữ liệu} & \textbf{Đặc trưng}\\
+\midrule
+Horizontal FL & Khác nhau & Giống nhau\\
+Vertical FL & Trùng nhau & Khác nhau\\
+Federated transfer learning & Khác nhau & Khác nhau\\
+\bottomrule
+\end{tabularx}
+\par\bigskip
+Ví dụ horizontal FL: nhiều điện thoại học mô hình dự đoán từ.
+\par\medskip
+Ví dụ vertical FL: các tổ chức có thuộc tính bổ sung về cùng khách hàng.
+\flref
+\end{frame}
+
+\begin{frame}[t]{Non-IID: dữ liệu mỗi thiết bị khác nhau}
+\relax
+\textbf{Ví dụ minh họa:} ba thiết bị có tỷ lệ ba lớp khác nhau.
+\par\bigskip
+\centering
+\begin{tikzpicture}[x=.09cm,y=.9cm]
+\foreach \y/\name/\aa/\bb in {2/1/70/20,1/2/15/70,0/3/20/15}{
+  \node[anchor=east,font=\small] at (-5,\y+.22) {Thiết bị \name};
+  \fill[HustRed] (0,\y) rectangle (\aa,\y+.45);
+  \fill[HustGold] (\aa,\y) rectangle (\aa+\bb,\y+.45);
+  \fill[Blue] (\aa+\bb,\y) rectangle (100,\y+.45);
+}
+\node[anchor=west,font=\scriptsize,text=HustRed] at (0,-.7) {Lớp A};
+\node[anchor=west,font=\scriptsize,text=HustGold!80!black] at (33,-.7) {Lớp B};
+\node[anchor=west,font=\scriptsize,text=Blue] at (66,-.7) {Lớp C};
+\end{tikzpicture}
+\par\medskip\raggedright
+\begin{itemize}
+\item Mỗi client có thể học theo một hướng khác nhau.
+\item Chọn lặp lại một nhóm thiết bị có thể làm mô hình thiếu đại diện.
+\item Paper dùng độ lệch gradient để biểu diễn khác biệt dữ liệu.
+\end{itemize}
+\source{McMahan và cộng sự (2017); paper UAV, Sec. I--II-B. Biểu đồ là dữ liệu minh họa tự xây dựng.}
+\end{frame}
+
+\begin{frame}[t]{Lợi ích và thách thức}
+\relax
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}
+\textcolor{HustRed}{\textbf{Lợi ích}}
+\begin{itemize}
+\item Hạn chế truyền dữ liệu nhạy cảm.
+\item Học từ dữ liệu phân tán.
+\item Có thể giảm tải truyền dữ liệu gốc.
+\end{itemize}
+\column{.49\textwidth}
+\textcolor{HustRed}{\textbf{Thách thức}}
+\begin{itemize}
+\item Dữ liệu non-IID.
+\item Phần cứng, kết nối khác nhau.
+\item Chi phí trao đổi nhiều vòng.
+\item Cập nhật có thể rò rỉ thông tin.
+\end{itemize}
+\end{columns}
+\par\bigskip
+Có thể bổ sung secure aggregation hoặc differential privacy.
+\source{Google Cloud, What is federated learning?; McMahan và cộng sự (2017), Sec. 1, 5.}
+\end{frame}
+
+
+\begin{frame}[t]{FedAvg: bài toán học chung}\relax
+\small
+Có $K$ thiết bị; thiết bị $k$ giữ tập chỉ số $\mathcal P_k$, $n_k=|\mathcal P_k|$, $n=\sum_k n_k$. Mọi thiết bị dùng cùng kiến trúc mô hình $w\in\mathbb R^d$.
+\[\min_{w\in\mathbb R^d}f(w)=\frac1n\sum_{i=1}^n f_i(w)
+=\sum_{k=1}^K\frac{n_k}{n}F_k(w),\qquad
+F_k(w)=\frac1{n_k}\sum_{i\in\mathcal P_k}f_i(w).\]
+\begin{itemize}\item $f_i(w)=\ell(x_i,y_i;w)$: lỗi dự đoán trên một mẫu.
+\item $F_k$: loss trung bình cục bộ; $f$: loss trên toàn bộ dữ liệu.
+\item Biến tối ưu là trọng số mô hình $w$; dữ liệu vẫn ở thiết bị.
+\end{itemize}
+\eqmeaning{Thiết bị nhiều mẫu có trọng số lớn hơn; mục tiêu này không mặc định cân bằng công bằng giữa các thiết bị.}
+\source{McMahan và cộng sự, 1602.05629v4, Sec. 2 và Algorithm 1 (có erratum).}
+\end{frame}
+
+\begin{frame}[t]{FedAvg: input và output}\relax
+\small
+\begin{tabularx}{\textwidth}{@{}p{2cm}Y@{}}\toprule
+Thành phần & Nội dung\\\midrule
+Input dữ liệu & Các tập $\mathcal P_k$ phân tán, kích thước $n_k$; server không cần nhận mẫu thô.\\
+Input mô hình & Kiến trúc chung, hàm loss khả vi, khởi tạo $w_0$.\\
+Siêu tham số & Tỷ lệ tham gia $C$, số epoch cục bộ $E$, minibatch $B$, learning rate $\eta$.\\
+Output mỗi vòng & Mô hình toàn cục mới $w_{t+1}$ sau tổng hợp.\\
+Output cuối & Mô hình $w_T$ để suy luận; chất lượng đánh giá trên dữ liệu kiểm tra riêng.\\\bottomrule\end{tabularx}
+\eqmeaning{$T$ là ngân sách số vòng dùng khi triển khai mã giả; không phải số epoch cục bộ $E$.}
+\source{McMahan và cộng sự, 1602.05629v4, Sec. 2 và Algorithm 1 (có erratum).}
+\end{frame}
+
+\begin{frame}[t]{Objective và constraint: đọc đúng phạm vi}\relax
+\small
+\textbf{Objective toán học:} tối thiểu hóa empirical loss $f(w)$, thường không lồi với mạng neural.
+\par\medskip
+\textbf{Động cơ thiết kế:} giảm số vòng giao tiếp để đạt chất lượng mục tiêu bằng cách tăng tính toán cục bộ.
+\begin{itemize}
+\item Bài FedAvg không đặt một hệ ràng buộc công suất, CPU hay deadline trong bài toán $\min_w f(w)$.
+\item Giả thiết thực nghiệm: tập client và dữ liệu cố định, cập nhật đồng bộ, chọn ngẫu nhiên một phần client mỗi vòng.
+\item Non-IID và mất cân bằng kích thước dữ liệu là đặc tính bài toán, không phải bất đẳng thức ràng buộc.
+\item Dữ liệu giữ tại client; gửi cập nhật không tự tạo bảo đảm differential privacy.
+\end{itemize}
+\source{McMahan và cộng sự, 1602.05629v4, Sec. 2 và Algorithm 1 (có erratum).}
+\end{frame}
+
+\begin{frame}[t]{Mã giả FedAvg: phía server}\relax
+\small
+\begin{enumerate}
+\item Khởi tạo mô hình chung $w_0$.
+\item Với mỗi vòng $t=0,\ldots,T-1$:
+\item Chọn ngẫu nhiên tập $S_t$ gồm $m=\max(\lfloor CK\rfloor,1)$ client.
+\item Gửi $w_t$; chạy song song $w_{t+1}^k\leftarrow\operatorname{ClientUpdate}(k,w_t)$ với $k\in S_t$.
+\item Tính $n_{S_t}=\sum_{k\in S_t}n_k$ và tổng hợp
+\[w_{t+1}=\sum_{k\in S_t}\frac{n_k}{n_{S_t}}w_{t+1}^k.\]
+\item Trả về $w_T$ khi hết ngân sách.
+\end{enumerate}
+\noteonly{Mã giả diễn giải Algorithm 1: quy ước làm tròn được ghi rõ. Bản v4 sửa mẫu số thành tổng số mẫu của các client được chọn.}
+\source{McMahan và cộng sự, 1602.05629v4, Sec. 2 và Algorithm 1 (có erratum).}
+\end{frame}
+
+\begin{frame}[t]{Mã giả FedAvg: phía client}\relax
+\small
+\textbf{ClientUpdate$(k,w)$}
+\begin{enumerate}\item Nhận $w=w_t$ từ server; tạo các minibatch kích thước $B$ từ $\mathcal P_k$.
+\item Với epoch $e=1,\ldots,E$, duyệt từng minibatch $b$:
+\[w\leftarrow w-\eta\nabla\ell(w;b).\]
+\item Gửi mô hình cuối $w$ về server; dữ liệu thô giữ tại chỗ.
+\end{enumerate}
+\eqmeaning{Mỗi client đi nhiều bước SGD từ cùng $w_t$, rồi server trung bình các điểm cuối.}
+\par\medskip
+$E$ lớn hoặc $B$ nhỏ làm tăng số bước local, xấp xỉ $E n_k/B$. Điều này có thể giảm giao tiếp, nhưng tăng sai lệch giữa các cập nhật khi dữ liệu khác nhau. Không nên mặc định tăng $E$ luôn tốt.
+\source{McMahan và cộng sự, 1602.05629v4, Sec. 2 và Algorithm 1 (có erratum).}
+\end{frame}
+
+\begin{frame}[t]{Từ FedAvg đến bài toán tài nguyên FSTPO}\relax
+\small
+\begin{itemize}
+\item FedSGD với full batch và một bước local tổng hợp các gradient; FedAvg cho phép nhiều bước local trước khi giao tiếp.
+\item Cùng điểm xuất phát giúp việc trung bình mô hình có ý nghĩa; trung bình các mạng khởi tạo độc lập có thể cho kết quả xấu.
+\item Bài báo báo cáo giảm khoảng $10$--$100$ lần số vòng giao tiếp trong các thí nghiệm so với SGD đồng bộ; đây không phải bảo đảm cho mọi dữ liệu.
+\item FedAvg chọn ngẫu nhiên client; FSTPO học chọn client và cấp băng thông/CPU trong mạng UAV.
+\end{itemize}
+\eqmeaning{Tầng học tối ưu $w$; tầng điều khiển tài nguyên chọn ai được học và với chi phí nào. Hai tầng liên quan nhưng có biến tối ưu khác nhau.}
+\source{McMahan và cộng sự, 1602.05629v4, Sec. 2 và Algorithm 1 (có erratum).}
+\end{frame}
+
+\section{System model and problem formulation}
+\hustpartpage{2}{SYSTEM MODEL\\AND PROBLEM FORMULATION}{Mô hình hệ thống và bài toán tối ưu tài nguyên}
+\subsection{Kiến trúc mạng và biến quyết định}
+
+\begin{frame}[t]{Kiến trúc UAV hỗ trợ IoT}
+\relax
+\begin{columns}[c,onlytextwidth]
+\column{.55\textwidth}
+\includegraphics[page=3,trim=47bp 587bp 309bp 55bp,clip,width=\linewidth]{\paperfile}
+\par{\scriptsize Hình 1 của paper.}
+\column{.42\textwidth}
+\begin{itemize}
+\item Thiết bị IoT học từ dữ liệu riêng.
+\item UAV mang máy chủ MEC, phục vụ offloading và tổng hợp theo cụm.
+\item Máy chủ mặt đất tổng hợp giữa các UAV qua backhaul riêng.
+\end{itemize}
+\end{columns}
+\par\medskip
+\textbf{Bối cảnh:} cứu hộ, giám sát vùng xa, triển khai tạm thời khi hạ tầng cố định hạn chế.
+\paperref{I-B, II-A--B, Hình 1}
+\end{frame}
+
+\begin{frame}[t]{Tập hợp, thời gian và vị trí}
+\relax
+\[
+\mathcal U=\{1,\ldots,U\},\quad \mathcal M=\{1,\ldots,M\},\quad
+\mathcal K=\{1,\ldots,K\}.
+\]
+\[
+\mathbf q_u^k=[x_u^k,y_u^k,H_u]^T,\qquad
+\mathbf p_m^k=[x_m^k,y_m^k,0]^T.
+\]
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$u,m,k$ & Chỉ số UAV, thiết bị và vòng giao tiếp.\\[.12em]
+$\mathbf q_u^k,\mathbf p_m^k$ & Vị trí 3D của UAV và thiết bị ở vòng $k$.\\[.12em]
+$H_u$ & Độ cao UAV $u$ so với mặt đất.
+\end{tabularx}}
+\eqmeaning{Di chuyển làm khoảng cách và chất lượng kênh thay đổi theo vòng.}
+\noteonly{Quỹ đạo là đầu vào của mô hình; bài toán (15) tối ưu lịch chọn, băng thông và CPU thiết bị.}
+\paperref{II-A; các định nghĩa không đánh số}
+\end{frame}
+
+\begin{frame}[t]{Ba nhóm biến quyết định}
+\relax
+\renewcommand{\arraystretch}{1.65}
+\begin{tabularx}{\textwidth}{@{}p{2cm}Y@{}}
+\toprule
+\textbf{Biến} & \textbf{Quyết định}\\
+\midrule
+$s_{m,u}^k\in\{0,1\}$ & Có chọn thiết bị $m$ kết nối và offload đến UAV $u$ hay không?\\
+$b_{m,u}^k\geq0$ & Cấp bao nhiêu băng thông uplink cho kết nối đó?\\
+$f_m^k$ & Thiết bị $m$ chạy CPU ở tần số nào khi huấn luyện?\\
+\bottomrule
+\end{tabularx}
+\par\bigskip
+$s_{m,u}^k=1$: thiết bị tham gia và có liên kết với UAV $u$.\\
+$s_{m,u}^k=0$: không có liên kết phục vụ giữa cặp đó.
+\par\medskip
+\textbf{Tham số cho trước:} công suất phát $P_m$, năng lực CPU UAV $f_u$, ngân sách $B_{\max}$.
+\paperref{II-A, II-C--F}
+\end{frame}
+
+\begin{frame}[t]{Hai luồng công việc tại thiết bị và UAV}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[box,text width=2.45cm] (train) at (1.5,2.2) {Huấn luyện FL\\Dữ liệu riêng $\mathcal D_m$};
+\node[box,text width=2.45cm] (task) at (1.5,0) {Tác vụ ứng dụng\\Suy luận, xử lý cảm biến};
+\node[box,text width=2.5cm] (agg) at (7.6,2.2) {UAV tổng hợp\\Mô hình trong cụm};
+\node[box,text width=2.5cm] (edge) at (7.6,0) {UAV tính toán MEC\\Thực thi tác vụ};
+\draw[flow] (train)--node[lab,above]{Mô hình $\mathbf w_m^k$\\Kích thước $Z$}(agg);
+\draw[dataflow] (task)--node[lab,above]{Dữ liệu tác vụ\\Kích thước $v_m^k$}(edge);
+\end{tikzpicture}
+\par\bigskip\raggedright
+\begin{itemize}
+\item Dữ liệu huấn luyện gốc giữ tại thiết bị.
+\item Tác vụ offload độc lập với quá trình huấn luyện FL.
+\item Hai luồng cùng tiêu thụ tài nguyên uplink và được điều khiển bởi $s_{m,u}^k$.
+\end{itemize}
+\paperref{II-A, II-C}
+\end{frame}
+\subsection{Mô hình học liên kết}
+
+\begin{frame}[t]{Hàm mất mát cục bộ}
+\relax
+\begin{equation}L_m(\mathbf w)=\frac{1}{D_m}\sum_{i=1}^{D_m}\ell(\mathbf w;\mathbf x_{m,i},y_{m,i}),\tag{1}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\mathcal D_m,\ D_m$ & Tập dữ liệu của thiết bị $m$ và số mẫu trong tập.\\[.12em]
+$\mathbf x_{m,i},y_{m,i}$ & Đặc trưng và nhãn của mẫu thứ $i$.\\[.12em]
+$\mathbf w\in\mathbb R^d$ & Vector gồm $d$ tham số của mô hình.\\[.12em]
+$\ell(\cdot)$ & Loss trên một mẫu; $L_m$ là loss trung bình tại thiết bị.
+\end{tabularx}}\eqmeaning{Đo mức sai lệch của mô hình trên dữ liệu riêng của thiết bị $m$. Giá trị nhỏ hơn thể hiện mô hình khớp dữ liệu cục bộ tốt hơn.}
+\paperref{II-B, (1)}
+\end{frame}
+
+\begin{frame}[t]{Hàm mất mát toàn cục}
+\relax
+\begin{equation}F(\mathbf w)=\sum_{m\in\mathcal M}\frac{D_m}{D_{\tot}}L_m(\mathbf w),\tag{2}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$D_{\tot}=\sum_m D_m$ & Tổng số mẫu của toàn bộ thiết bị.\\[.12em]
+$D_m/D_{\tot}$ & Trọng số của thiết bị $m$ trong mục tiêu học.\\[.12em]
+$F(\mathbf w)$ & Loss trung bình có trọng số trên toàn bộ dữ liệu phân tán.
+\end{tabularx}}\eqmeaning{Liên kết các mục tiêu cục bộ thành một mục tiêu học chung. Thiết bị có nhiều mẫu đóng góp nhiều hơn vào loss toàn cục.}
+\noteonly{Mẫu của thiết bị chưa được chọn ở một vòng vẫn thuộc tập dữ liệu định nghĩa mục tiêu toàn cục.}
+\paperref{II-B, (2)}
+\end{frame}
+
+\begin{frame}[t]{Cập nhật mô hình tại thiết bị}
+\relax
+\begin{equation}\mathbf w_m^{(k,i)}=\mathbf w_m^{(k,i-1)}-\eta\widehat\nabla L_m(\mathbf w_m^{(k,i-1)}),\tag{3}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$i\in\{1,\ldots,I\}$ & Bước cập nhật cục bộ; $I$ là số bước SGD.\\[.12em]
+$\eta$ & Tốc độ học.\\[.12em]
+$\widehat\nabla L_m$ & Gradient ngẫu nhiên ước lượng từ dữ liệu cục bộ.
+\end{tabularx}}\eqmeaning{Mỗi bước điều chỉnh tham số theo hướng làm giảm loss cục bộ. Chỉ thiết bị được chọn thực hiện huấn luyện.}
+\[\mathbf w_m^{(k,0)}=\mathbf w^{k-1},\qquad \mathbf w_m^k=\mathbf w_m^{(k,I)}.\]
+\paperref{II-B, (3)}
+\end{frame}
+
+\begin{frame}[t]{Tổng hợp mô hình toàn cục}
+\relax
+\begin{equation}\mathbf w^k=\frac{\sum_{u\in\mathcal U}(\sum_{m\in\mathcal M}s_{m,u}^kD_m)\mathbf w_u^k}{\sum_{u\in\mathcal U}\sum_{m\in\mathcal M}s_{m,u}^kD_m},\tag{4}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\mathbf w_u^k$ & Mô hình UAV $u$ tổng hợp từ các thiết bị trong cụm.\\[.12em]
+$\sum_m s_{m,u}^kD_m$ & Tổng số mẫu của các thiết bị được UAV $u$ chọn.\\[.12em]
+$\mathbf w^k$ & Mô hình chung sau tổng hợp giữa các UAV.
+\end{tabularx}}\eqmeaning{Trọng số của mỗi UAV phản ánh lượng dữ liệu đang tham gia. Mô hình mới được phân phối ở vòng kế tiếp.}
+\noteonly{Giả sử có ít nhất một thiết bị tham gia để mẫu số khác 0.}
+\paperref{II-B, (4)}
+\end{frame}
+
+\begin{frame}[t]{Sơ đồ tổng hợp hai cấp}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[box,text width=3.2cm] (global) at (5,3.9) {Máy chủ trung tâm\\$\mathbf w^k$};
+\node[box,text width=2.5cm] (u1) at (2,2) {UAV 1: $\mathbf w_1^k$};
+\node[box,text width=2.5cm] (u2) at (8,2) {UAV 2: $\mathbf w_2^k$};
+\node[faint] (m1) at (.7,0) {$\mathbf w_1^k$ tại MID 1};
+\node[faint] (m2) at (3.3,0) {$\mathbf w_2^k$ tại MID 2};
+\node[faint] (m3) at (6.7,0) {$\mathbf w_3^k$ tại MID 3};
+\node[faint] (m4) at (9.3,0) {$\mathbf w_4^k$ tại MID 4};
+\draw[flow] (m1.north)--(u1.south west);
+\draw[flow] (m2.north)--(u1.south east);
+\draw[flow] (m3.north)--(u2.south west);
+\draw[flow] (m4.north)--(u2.south east);
+\draw[flow] (u1.north)--node[lab,left]{Trọng số dữ liệu}(global.south west);
+\draw[flow] (u2.north)--node[lab,right]{Trọng số dữ liệu}(global.south east);
+\end{tikzpicture}
+\par\bigskip\raggedright
+\textbf{Cấp 1:} thiết bị gửi mô hình cho UAV phục vụ.\\
+\textbf{Cấp 2:} máy chủ hợp nhất mô hình của các UAV theo (4).
+\noteonly{Sơ đồ minh họa 2 UAV và 4 MID; số nút thực tế là $U$ và $M$.}
+\paperref{II-B, (4); sơ đồ vẽ lại}
+\end{frame}
+
+\begin{frame}[t]{Độ lệch gradient do dữ liệu non-IID}
+\relax
+\begin{equation}(\delta_m^{k-1})^2=\left\|\nabla L_m(\mathbf w^{k-1})-\nabla F(\mathbf w^{k-1})\right\|^2,\tag{5}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\nabla L_m$ & Hướng gradient thật trên dữ liệu của thiết bị $m$.\\[.12em]
+$\nabla F$ & Hướng gradient thật của mục tiêu toàn cục.\\[.12em]
+$\delta_m^{k-1}$ & Độ lệch tính tại cùng mô hình $\mathbf w^{k-1}$.
+\end{tabularx}}\eqmeaning{Giá trị lớn biểu thị hướng học cục bộ khác nhiều so với hướng học chung; đây là tín hiệu về sự không đồng nhất dữ liệu.}
+\paperref{II-B, (5)}
+\end{frame}
+
+\begin{frame}[t]{Utility của hoạt động học liên kết}
+\relax
+\begin{equation}\Upsilon_{\FL}^k=\sum_{u\in\mathcal U}\sum_{m\in\mathcal M}s_{m,u}^k\frac{D_m}{D_{\tot}}\exp[-\lambda(\delta_m^{k-1})^2],\tag{6}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$s_{m,u}^k$ & Chỉ thiết bị được chọn mới đóng góp utility ở vòng $k$.\\[.12em]
+$D_m/D_{\tot}$ & Phản ánh quy mô dữ liệu của thiết bị.\\[.12em]
+$\lambda>0$ & Điều chỉnh mức phạt độ lệch gradient.
+\end{tabularx}}\eqmeaning{Ưu tiên thiết bị có nhiều dữ liệu và gradient ít lệch khỏi hướng toàn cục, đồng thời vẫn phải xét chi phí phục vụ.}
+\noteonly{$\Upsilon_{\FL}^k$ là đại lượng thay thế cho lợi ích học. Accuracy thực được kiểm tra riêng bằng $\Acc^K\geq\Acc_{\mathrm{target}}$.}
+\paperref{II-B, (6)}
+\end{frame}
+\subsection{Mô hình truyền thông}
+
+\begin{frame}[t]{Khối lượng dữ liệu gửi uplink}
+\relax
+\[
+\Omega_m^k=\underbrace{Z}_{\text{mô hình nén}}
+             +\underbrace{v_m^k}_{\text{tác vụ offload}}.
+\]
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$Z$ & Kích thước mô hình sau lượng tử hóa và làm thưa gradient.\\[.12em]
+$v_m^k$ & Kích thước dữ liệu tác vụ ứng dụng ở vòng $k$.\\[.12em]
+$\Omega_m^k$ & Tổng lượng dữ liệu thiết bị cần gửi lên UAV.
+\end{tabularx}}
+\eqmeaning{Uplink phải tải cả cập nhật FL và dữ liệu tác vụ. Hai thành phần cùng quyết định thời gian truyền và năng lượng phát.}
+\noteonly{Quy trình nén được áp dụng thống nhất cho các thiết bị; không phải biến tối ưu trong (15). Khi tính tốc độ theo bit/s, đổi mọi kích thước về bit.}
+\paperref{II-C; công thức không đánh số}
+\end{frame}
+
+\begin{frame}[t]{Khoảng cách thiết bị--UAV}
+\relax
+\begin{equation}d_{m,u}^k=\sqrt{(x_u^k-x_m^k)^2+(y_u^k-y_m^k)^2+H_u^2},\tag{7}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$x_u^k,y_u^k$ & Tọa độ ngang của UAV.\\[.12em]
+$x_m^k,y_m^k$ & Tọa độ thiết bị mặt đất.\\[.12em]
+$H_u$ & Độ cao UAV; $d_{m,u}^k$ là khoảng cách 3D.
+\end{tabularx}}\eqmeaning{Khoảng cách kết hợp độ lệch ngang và độ cao; thiết bị càng xa UAV thì suy hao truyền dẫn càng lớn trong mô hình kế tiếp.}
+\paperref{II-C, (7)}
+\end{frame}
+
+\begin{frame}[t]{Hình học của liên kết không--mặt đất}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=.87cm]
+\coordinate (m) at (0,0);\coordinate (g) at (7,0);\coordinate (u) at (7,4);
+\draw[gray] (-.5,0)--(8.3,0);
+\draw[very thick,HustRed] (m)--node[lab,above,sloped]{$d_{m,u}^k$}(u);
+\draw[dashed,Blue] (u)--node[lab,right]{$H_u$}(g);
+\draw[<->,Muted] (0,-.65)--node[lab,below]{Khoảng cách ngang}(7,-.65);
+\draw (6.7,0)--(6.7,.3)--(7,.3);
+\fill[HustRed] (m) circle(2pt);\fill[HustRed] (u) circle(2pt);
+\node[anchor=east,font=\small] at (-.1,.2) {MID $m$};
+\node[anchor=south,font=\small] at (7,4.2) {UAV $u$};
+\end{tikzpicture}
+\par\medskip\raggedright
+Giữ nguyên độ cao, khi UAV dịch xa thiết bị theo phương ngang thì $d_{m,u}^k$ tăng và gain $h_{m,u}^k$ giảm.
+\paperref{II-A, II-C, (7)--(8); hình minh họa hình học}
+\end{frame}
+
+\begin{frame}[t]{Gain kênh truyền quy mô lớn}
+\relax
+\begin{equation}h_{m,u}^k=\frac{\beta_0}{(d_{m,u}^k)^2},\tag{8}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$h_{m,u}^k$ & Gain công suất kênh của liên kết thiết bị--UAV.\\[.12em]
+$\beta_0$ & Gain tại khoảng cách tham chiếu theo quy ước paper.\\[.12em]
+$d_{m,u}^k$ & Khoảng cách 3D từ (7).
+\end{tabularx}}\eqmeaning{Paper dùng mô hình suy hao không gian tự do cho liên kết có xác suất LoS cao. Gain giảm theo bình phương khoảng cách.}
+\noteonly{Đây là gain quy mô lớn. Fading tức thời được đưa thêm vào mô hình độ tin cậy ở (12)--(13).}
+\paperref{II-C, (8)}
+\end{frame}
+
+\begin{frame}[t]{Tốc độ truyền dữ liệu uplink}
+\relax
+\begin{equation}R_{m,u}^k=b_{m,u}^k\log_2\!\left(1+\frac{P_mh_{m,u}^k}{N_0b_{m,u}^k}\right),\tag{9}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$b_{m,u}^k$ & Băng thông cấp cho thiết bị (Hz).\\[.12em]
+$P_m$ & Công suất phát của thiết bị (W).\\[.12em]
+$N_0$ & Mật độ phổ công suất nhiễu (W/Hz).\\[.12em]
+$R_{m,u}^k$ & Tốc độ truyền khả dụng (bit/s).
+\end{tabularx}}\eqmeaning{Tốc độ phụ thuộc đồng thời băng thông, công suất và khoảng cách thông qua gain kênh. Tốc độ lớn giúp truyền xong nhanh hơn.}
+\noteonly{FDMA: mỗi UAV có quỹ $B_{\max}$ riêng, các quỹ không chồng lấn để loại nhiễu đồng kênh giữa UAV.}
+\paperref{II-C, (9)}
+\end{frame}
+\subsection{Mô hình độ trễ và năng lượng}
+
+\begin{frame}[t]{Huấn luyện cục bộ: thời gian và năng lượng}
+\relax
+\[
+t_m^{\mathrm{comp},k}=\frac{ID_mc_m}{f_m^k},\qquad
+E_m^{\mathrm{comp},k}=\kappa_m(f_m^k)^2(ID_mc_m).
+\]
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$I,D_m$ & Số bước học cục bộ và số mẫu dữ liệu.\\[.12em]
+$c_m$ & Hệ số chi phí CPU để xử lý dữ liệu.\\[.12em]
+$f_m^k,\kappa_m$ & Tần số CPU và hệ số điện dung hiệu dụng của thiết bị.
+\end{tabularx}}
+\eqmeaning{Tăng tần số CPU làm thời gian học giảm nhưng năng lượng tính toán tăng theo bình phương tần số.}
+\noteonly{Giữ nguyên công thức paper. Paper định nghĩa $D_m$ theo số mẫu nhưng ghi $c_m$ là cycles/bit; cần quy đổi mẫu sang bit để nhất quán đơn vị khi tính số.}
+\paperref{II-D; các công thức không đánh số}
+\end{frame}
+
+\begin{frame}[t]{Truyền uplink: thời gian và năng lượng}
+\relax
+\[
+\text{Thời gian uplink khi được chọn}=\frac{\Omega_m^k}{R_{m,u}^k},
+\]
+\[
+E_{m,u}^{\mathrm{comm},k}=s_{m,u}^kP_m\frac{\Omega_m^k}{R_{m,u}^k}.
+\]
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\Omega_m^k$ & Tổng kích thước mô hình và dữ liệu tác vụ.\\[.12em]
+$R_{m,u}^k$ & Tốc độ uplink từ (9).\\[.12em]
+$s_{m,u}^k$ & Kích hoạt chi phí truyền cho cặp được chọn.
+\end{tabularx}}
+\eqmeaning{Năng lượng phát bằng công suất nhân thời gian. Tác vụ lớn hoặc kênh chậm làm năng lượng truyền tăng.}
+\noteonly{Tỷ số được đánh giá trên liên kết hoạt động, có tốc độ dương.}
+\paperref{II-D; các biểu thức không đánh số}
+\end{frame}
+
+\begin{frame}[t]{Tính toán biên trên UAV}
+\relax
+\[
+t_{m,u}^{\mathrm{edge},k}=\frac{v_m^kc_u}{f_u},\qquad
+E_{u,m}^{\mathrm{edge},k}=\kappa_u f_u^2(v_m^kc_u).
+\]
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$v_m^k$ & Kích thước tác vụ thiết bị $m$ offload lên UAV.\\[.12em]
+$c_u$ & Số chu kỳ CPU cần xử lý một bit tác vụ.\\[.12em]
+$f_u$ & Năng lực xử lý CPU đa lõi tổng hợp của UAV.\\[.12em]
+$\kappa_u$ & Hệ số điện dung hiệu dụng của CPU UAV.
+\end{tabularx}}
+\eqmeaning{UAV chịu thời gian và năng lượng để thực thi tác vụ được offload. Các chi phí này chỉ phát sinh khi $s_{m,u}^k=1$.}
+\noteonly{Paper xem $f_u$ là tham số cho trước, còn $f_m^k$ của thiết bị là biến tối ưu.}
+\paperref{II-D; các công thức không đánh số}
+\end{frame}
+
+\begin{frame}[t]{Thời gian một vòng giao tiếp}
+\relax
+\textbf{Thời gian phục vụ một thiết bị:}
+\[
+t_{m,u}^k=t_m^{\mathrm{comp},k}+\frac{\Omega_m^k}{R_{m,u}^k}
+                  +t_{m,u}^{\mathrm{edge},k}.
+\]
+\begin{equation}
+T^k=\max_{m\in\mathcal M,u\in\mathcal U}
+\left\{s_{m,u}^k\left(t_m^{\mathrm{comp},k}
++\frac{\Omega_m^k}{R_{m,u}^k}+t_{m,u}^{\mathrm{edge},k}\right)\right\}.
+\tag{10}
+\end{equation}
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$t_{m,u}^k$ & Tổng thời gian học, truyền và xử lý biên của một cặp.\\[.12em]
+$T^k$ & Viết gọn $T^k=\max_{m,u}\{s_{m,u}^kt_{m,u}^k\}$; thời gian do thiết bị được chọn chậm nhất quyết định.
+\end{tabularx}}
+\eqmeaning{Đồng bộ theo vòng tạo hiệu ứng ``thiết bị chậm'': một liên kết hoặc CPU chậm có thể kéo dài cả vòng.}
+\paperref{II-D, (10) và định nghĩa không đánh số}
+\end{frame}
+
+\begin{frame}[t]{Minh họa đồng bộ theo thiết bị chậm nhất}
+\relax
+\centering
+\begin{tikzpicture}[x=.92cm,y=1cm]
+\node[anchor=east,font=\small] at (0,2.2) {MID 1};
+\node[anchor=east,font=\small] at (0,.9) {MID 2};
+\fill[HustRed!85] (.3,1.9) rectangle (2.2,2.5);
+\fill[HustGold] (2.2,1.9) rectangle (4.7,2.5);
+\fill[Blue!85] (4.7,1.9) rectangle (6,2.5);
+\fill[HustRed!85] (.3,.6) rectangle (3.5,1.2);
+\fill[HustGold] (3.5,.6) rectangle (6.6,1.2);
+\fill[Blue!85] (6.6,.6) rectangle (8.4,1.2);
+\draw[dashed,Muted] (8.4,.1)--(8.4,2.9);
+\node[font=\small,anchor=south] at (8.4,2.9) {$T^k$};
+\draw[flow] (.3,-.1)--(9.1,-.1) node[right,font=\scriptsize]{Thời gian};
+\node[lab,text=HustRed] at (1.3,-.8) {Huấn luyện};
+\node[lab,text=HustGold!85!black] at (4.6,-.8) {Uplink};
+\node[lab,text=Blue] at (7.6,-.8) {MEC};
+\end{tikzpicture}
+\par\bigskip\raggedright
+\textbf{Trong ví dụ:} MID 2 quyết định thời gian hoàn thành vòng. Tăng tài nguyên cho MID 1 chưa chắc giảm $T^k$.
+\noteonly{Độ dài các đoạn chỉ minh họa định tính, không phải số liệu mô phỏng.}
+\paperref{II-D, (10); sơ đồ minh họa tự xây dựng}
+\end{frame}
+
+\begin{frame}[t]{Tổng năng lượng hệ thống}
+\relax
+\textbf{Năng lượng phục vụ một cặp thiết bị--UAV:}
+\[
+E_{m,u}^k=E_m^{\mathrm{comp},k}+E_{m,u}^{\mathrm{comm},k}
+                          +E_{u,m}^{\mathrm{edge},k}.
+\]
+\begin{equation}
+E_{\tot}^k=\sum_{u\in\mathcal U}\sum_{m\in\mathcal M}s_{m,u}^kE_{m,u}^k.
+\tag{11}
+\end{equation}
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$E_{m,u}^k$ & Gộp năng lượng học tại thiết bị, uplink và MEC.\\[.12em]
+$s_{m,u}^k$ & Chỉ cộng năng lượng của các cặp đang được phục vụ.
+\end{tabularx}}
+\eqmeaning{Đánh giá chi phí năng lượng của toàn bộ các quyết định trong một vòng, gồm cả thiết bị và CPU UAV.}
+\noteonly{Giữ nguyên công thức paper: $E^{\mathrm{comm},k}$ đã chứa $s$. Với $s\in\{0,1\}$, nhân thêm $s$ ở tổng không làm thay đổi kết quả. Năng lượng bay treo không được tính vì độc lập với các biến tối ưu.}
+\paperref{II-D, (11) và định nghĩa không đánh số}
+\end{frame}
+\subsection{Độ tin cậy và bài toán tối ưu}
+
+\begin{frame}[t]{SNR tức thời}
+\relax
+\begin{equation}\gamma_{m,u}^k=\frac{P_m\widetilde h_{m,u}^k}{N_0b_{m,u}^k},\tag{12}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\widetilde h_{m,u}^k$ & Gain tức thời có fading, phân bố mũ với trung bình $h_{m,u}^k$.\\[.12em]
+$P_m\widetilde h_{m,u}^k$ & Công suất tín hiệu nhận.\\[.12em]
+$N_0b_{m,u}^k$ & Công suất nhiễu trong băng thông được cấp.
+\end{tabularx}}\eqmeaning{SNR so sánh tín hiệu với nhiễu. Dù vị trí và băng thông giữ nguyên, fading vẫn có thể làm SNR biến động.}
+\noteonly{Giải mã thành công nếu $\gamma_{m,u}^k\geq\gamma_{\mathrm{th}}$; ngược lại xảy ra outage.}
+\paperref{II-E, (12)}
+\end{frame}
+
+\begin{frame}[t]{Xác suất truyền thành công}
+\relax
+\begin{equation}\Gamma_{m,u}^k=\Pr(\gamma_{m,u}^k\geq\gamma_{\mathrm{th}})=\exp\!\left(-\frac{\gamma_{\mathrm{th}}N_0b_{m,u}^k}{P_mh_{m,u}^k}\right),\tag{13}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\gamma_{\mathrm{th}}$ & Ngưỡng SNR dùng để giải mã, ở thang tuyến tính trong công thức.\\[.12em]
+$\Gamma_{m,u}^k$ & Xác suất thành công, nằm trong $[0,1]$.\\[.12em]
+$\Gamma_{\min}$ & Ngưỡng xác suất thành công tối thiểu cần đạt.
+\end{tabularx}}\eqmeaning{Chuyển biến động kênh ngẫu nhiên thành một chỉ tiêu độ tin cậy để đưa vào ràng buộc tối ưu.}
+\noteonly{Với công suất phát cố định, tăng $b$ cũng tăng nhiễu trong mô hình này. $\Gamma_{\min}$ là xác suất, không phải giá trị dB.}
+\paperref{II-E, (13)}
+\end{frame}
+
+\begin{frame}[t]{Utility hệ thống trong một vòng}
+\relax
+\begin{equation}U^k=\omega_1\Upsilon_{\FL}^k-\omega_2E_{\tot}^k-\omega_3T^k,\tag{14}\end{equation}\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\omega_1>0$ & Trọng số của lợi ích học FL.\\[.12em]
+$\omega_2>0$ & Mức phạt tiêu thụ năng lượng.\\[.12em]
+$\omega_3>0$ & Mức phạt thời gian hoàn thành vòng.
+\end{tabularx}}\eqmeaning{Chính sách tốt cần tạo lợi ích học cao với chi phí năng lượng và độ trễ phù hợp. Tăng một thành phần có thể làm xấu thành phần khác.}
+\noteonly{Các trọng số được hiệu chỉnh để các đại lượng khác đơn vị có thang số so sánh phù hợp.}
+\paperref{II-F, (14)}
+\end{frame}
+
+\begin{frame}[t]{Bài toán tối ưu chung}
+\relax
+{\fontsize{9}{10.5}\selectfont\setlength{\jot}{0pt}
+\begin{equation}
+\begin{aligned}
+\max_{s_{m,u}^k,b_{m,u}^k,f_m^k}\quad &\sum_{k=1}^{K}U^k\\[-.2em]
+\mathrm{s.t.}\quad
+\mathrm{(C1)}\;&s_{m,u}^k\in\{0,1\},&&\forall m,u,k,\\
+\mathrm{(C2)}\;&\sum_{u\in\mathcal U}s_{m,u}^k\leq1,&&\forall m,k,\\
+\mathrm{(C3)}\;&\sum_{m\in\mathcal M}s_{m,u}^kb_{m,u}^k\leq B_{\max},&&\forall u,k,\\
+\mathrm{(C4)}\;&b_{m,u}^k\geq0,&&\forall m,u,k,\\
+\mathrm{(C5)}\;&f_m^{\min}\leq f_m^k\leq f_m^{\max},&&\forall m,k,\\
+\mathrm{(C6)}\;&s_{m,u}^kt_{m,u}^k\leq T_{\max},&&\forall m,u,k,\\
+\mathrm{(C7)}\;&\Gamma_{m,u}^k\geq\Gamma_{\min},&&\forall m,u,k,\\
+\mathrm{(C8)}\;&\Acc^K\geq\Acc_{\mathrm{target}}.
+\end{aligned}\tag{15}
+\end{equation}}
+\eqmeaning{Tối đa tổng utility trong $K$ vòng bằng ba nhóm biến $s,b,f_m$, đồng thời đáp ứng giới hạn tài nguyên và chất lượng dịch vụ.}
+\paperref{II-F, (15)}
+\end{frame}
+
+\begin{frame}[t]{Ý nghĩa các ràng buộc tài nguyên}
+\relax
+\renewcommand{\arraystretch}{1.65}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.4cm}Y@{}}
+\toprule
+\textbf{Ràng buộc} & \textbf{Giải thích ngắn}\\
+\midrule
+(C1) & $s$ là quyết định nhị phân: chọn hoặc không chọn.\\
+(C2) & Mỗi thiết bị có thể được tối đa một UAV phục vụ trong một vòng.\\
+(C3) & Tổng băng thông của các thiết bị được chọn không vượt $B_{\max}$ của UAV.\\
+(C4) & Băng thông không âm.\\
+(C5) & CPU thiết bị hoạt động trong khoảng phần cứng $[f_m^{\min},f_m^{\max}]$.\\
+\bottomrule
+\end{tabularx}
+\par\medskip
+Các giới hạn này xác định quyết định nào có thể thực thi trên mạng.
+\paperref{II-F, (15), (C1)--(C5)}
+\end{frame}
+
+\begin{frame}[t]{Ý nghĩa các ràng buộc chất lượng}
+\relax
+\renewcommand{\arraystretch}{1.7}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.4cm}Y@{}}
+\toprule
+\textbf{Ràng buộc} & \textbf{Giải thích ngắn}\\
+\midrule
+(C6) & Thiết bị được chọn hoàn thành dịch vụ trong $T_{\max}$.\\
+(C7) & Xác suất truyền thành công đạt ít nhất $\Gamma_{\min}$.\\
+(C8) & Mô hình sau $K$ vòng đạt accuracy mục tiêu trên tập validation độc lập.\\
+\bottomrule
+\end{tabularx}
+\par\bigskip
+\textbf{Lưu ý khi đọc paper:}
+\begin{itemize}
+\item (C7) được viết cho mọi cặp $(m,u)$, không có $s$ đi kèm.
+\item $\Acc^K$ là accuracy đo thực tế; khác với utility thay thế $\Upsilon_{\FL}^k$.
+\end{itemize}
+\paperref{II-B, II-F, (15), (C6)--(C8)}
+\end{frame}
+
+\begin{frame}[t]{Sự liên kết giữa các quyết định}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[box,text width=2.1cm] (s) at (1.3,3) {Chọn thiết bị\\$s$};
+\node[box,text width=2.1cm] (b) at (5,3) {Băng thông\\$b$};
+\node[box,text width=2.1cm] (f) at (8.7,3) {CPU thiết bị\\$f_m$};
+\node[faint,text width=2.1cm] (learn) at (1.3,.6) {Dữ liệu tham gia\\$\Upsilon_{\FL}^k$};
+\node[faint,text width=2.1cm] (comm) at (5,.6) {Tốc độ, độ tin cậy\\$R,\Gamma$};
+\node[faint,text width=2.1cm] (time) at (8.7,.6) {Thời gian, năng lượng\\$T,E$};
+\draw[flow] (s)--(learn);\draw[flow] (b)--(comm);\draw[flow] (f)--(time);
+\draw[dataflow] (comm)--(time);
+\draw[dataflow] (s)--node[lab,above=6mm]{Chia sẻ tài nguyên}(b);
+\end{tikzpicture}
+\par\bigskip\raggedright
+\begin{itemize}
+\item Biến nhị phân và liên tục cùng xuất hiện, các quan hệ phi tuyến.
+\item Lựa chọn ở vòng hiện tại ảnh hưởng mô hình ở những vòng sau.
+\end{itemize}
+\textbf{Kết quả:} bài toán MINLP động, dẫn tới cách tiếp cận học chính sách FSTPO.
+\paperref{II-F--III; sơ đồ diễn giải}
+\end{frame}
+
+\section{FSTPO framework}
+\hustpartpage{3}{FSTPO FRAMEWORK}{Trực giác, sơ đồ và các công thức chính}
+
+\begin{frame}[t]{FSTPO: vòng ra quyết định}
+\relax
+\textbf{Federated Spatio-Temporal Policy Optimization.} Mỗi UAV là một tác tử.
+\par\bigskip\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[box,text width=2.2cm] (obs) at (1.3,3) {Quan sát\\Kênh, dữ liệu};
+\node[box,text width=2.3cm] (enc) at (5,3) {Bộ mã hóa\\Không gian--thời gian};
+\node[box,text width=2.1cm] (actor) at (8.7,3) {Actor\\Chính sách};
+\node[box,text width=2.2cm] (env) at (5,0) {Mạng UAV--IoT\\Thực thi $s,b,f_m$};
+\node[faint,text width=2.1cm] (critic) at (1.3,0) {Critic\\Đánh giá dài hạn};
+\draw[flow] (obs)--(enc);\draw[flow] (enc)--(actor);
+\draw[flow] (actor.south)|-node[lab,near end,above]{Hành động}(env.east);
+\draw[dataflow] (env)--node[lab,above]{Reward, cost}(critic);
+\draw[dataflow] (env.north)--node[lab,right]{Trạng thái mới}(enc.south);
+\end{tikzpicture}
+\par\bigskip\raggedright
+Actor chọn hành động. Critic đánh giá để cải thiện Actor trong giai đoạn huấn luyện.
+\paperref{III, III-B--D; sơ đồ đơn giản hóa Hình 2}
+\end{frame}
+
+\begin{frame}[t]{Trạng thái và hành động của UAV}
+\relax
+\begin{equation}
+\mathbf s_u^k=(\mathbf H_u^{k-\tau:k},\mathbf D_u^k,
+\boldsymbol\delta_u^{k-1},B_{\mathrm{rem}}^k).
+\tag{21}
+\end{equation}
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\mathbf H_u^{k-\tau:k}$ & Lịch sử kênh trong cửa sổ thời gian.\\[.12em]
+$\mathbf D_u^k$ & Khoảng cách đến các thiết bị.\\[.12em]
+$\boldsymbol\delta_u^{k-1}$ & Thông tin độ lệch gradient, phản ánh non-IID.\\[.12em]
+$B_{\mathrm{rem}}^k$ & Băng thông còn lại.
+\end{tabularx}}
+\eqmeaning{UAV quan sát cả điều kiện truyền thông và thông tin liên quan tới dữ liệu trước khi chọn $s,b,f_m$.}
+\noteonly{$\mathbf s_u^k$ là vector trạng thái; $s_{m,u}^k$ là biến chọn thiết bị.}
+\paperref{III-B, (21)}
+\end{frame}
+
+\begin{frame}[t]{Bộ mã hóa hai kênh}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[faint,text width=2.4cm] (phy) at (1.4,2) {Kênh vật lý\\Gain, khoảng cách};
+\node[faint,text width=2.4cm] (fed) at (1.4,0) {Kênh dữ liệu\\Độ lệch gradient};
+\node[box,text width=2.5cm] (gat) at (5.2,2) {Graph attention\\và LSTM};
+\node[box,text width=2.5cm] (gcn) at (5.2,0) {Graph\\convolution};
+\node[box,text width=1.5cm] (mix) at (9,1) {Cổng trộn\\$\mathbf g^k$};
+\draw[flow] (phy)--(gat);\draw[flow] (fed)--(gcn);
+\draw[flow] (gat.east)-|(mix.north);\draw[flow] (gcn.east)-|(mix.south);
+\end{tikzpicture}
+\begin{equation}
+\mathbf E_u^k=\mathbf g^k\odot\mathbf h_{u,\mathrm{phy}}^k
++(1-\mathbf g^k)\odot\mathbf h_{u,\mathrm{fed}}^k.
+\tag{20}
+\end{equation}
+\eqmeaning{Trộn đặc trưng vật lý và dữ liệu thành biểu diễn chung cho Actor--Critic. $\odot$ là phép nhân theo phần tử.}
+\paperref{III-A, (16)--(20), Thuật toán 1}
+\end{frame}
+
+\begin{frame}[t]{Học hành động rời rạc và liên tục}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[box,text width=2.2cm] (actor) at (1.3,1.5) {Actor\\Từ đặc trưng $\mathbf E_u^k$};
+\node[box,text width=2.8cm] (disc) at (6.2,2.9) {Gumbel--Softmax\\Chọn thiết bị $s$};
+\node[box,text width=2.8cm] (cont) at (6.2,.1) {Phân bố Beta\\Băng thông $b$, CPU $f_m$};
+\draw[flow] (actor.north)|-(disc.west);
+\draw[flow] (actor.south)|-(cont.west);
+\draw[dataflow] (disc)--node[lab,right]{Mask theo thiết bị được chọn}(cont);
+\end{tikzpicture}
+\par\bigskip\raggedright
+\begin{itemize}
+\item Khi học: làm mềm lựa chọn rời rạc để truyền gradient.
+\item Khi suy luận: dùng argmax để lấy quyết định chọn cứng.
+\item Mask gắn phân bổ tài nguyên với quyết định chọn thiết bị.
+\end{itemize}
+\paperref{III-B, (22) và mô tả hành động liên tục}
+\end{frame}
+
+\begin{frame}[t]{PPO có xử lý ràng buộc}
+\relax
+\textbf{Reward:} dùng utility $U^k$ trong (14).\\
+\textbf{Cost:} đo vi phạm độ trễ và độ tin cậy.
+\begin{equation}
+\widehat A_{\mathrm{total}}^k=\widehat A_r^k
+-\lambda_1\widehat A_{c,1}^k-\lambda_2\widehat A_{c,2}^k.
+\tag{27}
+\end{equation}
+\begin{itemize}
+\setlength{\itemsep}{.5em}
+\item $\widehat A_r$: hành động tốt hơn mức kỳ vọng về reward bao nhiêu.
+\item $\widehat A_{c,i}$: mức bất lợi xét theo chi phí vi phạm.
+\item $\lambda_i$: tăng mức phạt khi vi phạm vượt ngưỡng cho phép.
+\end{itemize}
+\eqmeaning{PPO cải thiện chính sách bằng cách cân đối lợi ích với vi phạm; cập nhật được giới hạn để tránh thay đổi quá mạnh.}
+\noteonly{RL xử lý chi phí tích lũy kỳ vọng; cơ chế này không trực tiếp bảo đảm accuracy (C8) ở mọi lần chạy.}
+\paperref{III-C--D, (23)--(28)}
+\end{frame}
+
+\begin{frame}[t]{Chia sẻ chính sách giữa các UAV}
+\relax
+\[
+a_u=\frac{\sum_m s_{m,u}^k}{\sum_{i\in\mathcal U}\sum_m s_{m,i}^k},
+\qquad \theta_{\mathrm{glob}}=\sum_u a_u\theta_u.
+\]
+\[
+\theta_u\leftarrow\tau\theta_{\mathrm{glob}}+(1-\tau)\theta_u.
+\]
+\par\medskip{\small\renewcommand{\arraystretch}{1.3}\begin{tabularx}{\textwidth}{@{}p{2.45cm}Y@{}}
+$\theta_u$ & Tham số Actor của UAV $u$.\\[.12em]
+$a_u$ & Trọng số theo số thiết bị đang được UAV phục vụ.\\[.12em]
+$\tau$ & Hệ số cập nhật mềm; chia sẻ mỗi $E_{\mathrm{share}}$ episode.
+\end{tabularx}}
+\eqmeaning{Các UAV học hỏi chính sách của nhau, đồng thời giữ một phần thích nghi cục bộ.}
+\noteonly{Đổi ký hiệu trọng số từ $w_u$ trong paper thành $a_u$ trên slide để tránh nhầm với mô hình FL $\mathbf w_u^k$.}
+\paperref{III-D, Thuật toán 2; công thức chia sẻ chính sách}
+\end{frame}
+
+\begin{frame}[t]{Hai mô hình và hai giai đoạn hoạt động}
+\relax
+\renewcommand{\arraystretch}{1.45}
+\begin{tabularx}{\textwidth}{@{}p{2.1cm}YY@{}}
+\toprule
+ & \textbf{Mô hình FL $\mathbf w$} & \textbf{Chính sách $\theta_u$}\\
+\midrule
+Mục đích & Học tác vụ từ dữ liệu thiết bị & Chọn lịch và phân bổ tài nguyên\\
+Nơi học & Thiết bị IoT & Các tác tử UAV\\
+Tổng hợp & Theo lượng dữ liệu & Theo số thiết bị phục vụ\\
+\bottomrule
+\end{tabularx}
+\par\bigskip
+\textbf{Offline:} huấn luyện FSTPO trong môi trường mô phỏng.\\[.45em]
+\textbf{Online:} UAV chạy Actor đã học để đưa ra $s,b,f_m$ trong các vòng FL thực thi.
+\par\medskip
+\textbf{Điểm chính:} FSTPO học cách quản lý tài nguyên cho hoạt động FL và offloading.
+\paperref{II-B, III, III-D}
+\end{frame}
+
+\section{Hướng mở rộng dựa trên bản thảo JNCA}
+\hustpartpage{4}{HƯỚNG MỞ RỘNG}{Chọn tập thiết bị, đa mục tiêu và đa mức đánh giá}
+
+\begin{frame}[t]{Hướng mở rộng: từ utility đến chất lượng học}\relax
+\small
+\textbf{Xuất phát từ FSTPO:} điều khiển $s,b,f$ để cân bằng utility FL thay thế, năng lượng và thời gian.
+\par\medskip
+\textbf{Bản thảo JNCA đề xuất:}
+\begin{itemize}\item Giữ loss validation toàn quần thể làm mục tiêu chất lượng học.
+\item Xem giá trị dữ liệu theo cả tập client: dữ liệu hiếm có thể bổ trợ, gradient khác biệt cũng có thể do nhiễu.
+\item Tìm tập phương án Pareto thay vì chỉ một nghiệm ứng với bộ trọng số cố định.
+\item Giảm chi phí tìm kiếm bằng đánh giá đa mức; chỉ thu thập thông tin mới khi đáng chi phí.
+\end{itemize}
+\noteonly{Đây là working draft: các đóng góp và lợi ích cần thực nghiệm kiểm chứng.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 1--2, 4.}
+\end{frame}
+
+\begin{frame}[t]{Mô hình mở rộng: ba mục tiêu}\relax
+\small
+\[\min_{\pi}\mathbf J(\pi)=\left(
+\mathbb E[L_{\rm val}(w_K)],\;
+\mathbb E\!\left[\sum_{k=0}^{K-1}E_k\right],\;
+\mathbb E\!\left[\sum_{k=0}^{K-1}T_k\right]\right).\]
+\[L_{\rm val}(w)=\sum_m p_m\frac1{|\mathcal V_m|}
+\sum_{\xi\in\mathcal V_m}\ell(w;\xi),\quad \sum_m p_m=1.\]
+\begin{itemize}\item Input: checkpoint, lịch sử báo cáo, kênh, giới hạn tài nguyên và pin.
+\item Output: tập lịch khả thi Pareto; chọn một lịch theo ưu tiên triển khai đã định trước.
+\item $p_m$ cố định theo quần thể mục tiêu; không đổi chỉ vì bỏ client khó phục vụ.
+\item Validation, training và test tách biệt; validation thực tế cần quyền truy cập và tính chi phí.
+\end{itemize}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 2.1, 4; (3), (27).}
+\end{frame}
+
+\begin{frame}[t]{Biến quyết định và ràng buộc mở rộng}\relax
+\small
+\textbf{Lõi ban đầu:} $x=(s,b^T,f^T)$; tùy chọn probing thêm $(z,b^P,f^P)$.
+\[s_{m,u}\in\{0,1\},\quad\sum_u s_{m,u}\le1,\quad
+0\le b^T_{m,u}\le B_u s_{m,u},\quad\sum_m b^T_{m,u}\le B_u.\]
+\[f_m^{\min}s_m\le f_m^T\le f_m^{\max}s_m,\quad
+1\le\sum_m s_m\le N_{\max}.\]
+\[T_k\le T_{\max},\qquad B_i^{k+1}=B_i^k-E_i^k\ge B_i^{\rm reserve}.\]
+\eqmeaning{Client không hoạt động nhận tài nguyên bằng 0; lịch phải thỏa khả dụng đường truyền, deadline và pin.}
+\noteonly{JNCA ban đầu dùng quỹ đạo cho trước, FL đồng bộ; offloading ứng dụng độc lập của FSTPO chưa nằm trong lõi này. Kết hợp hai bài cần thống nhất phạm vi chi phí.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 3--4; (14)--(16), (24), (28).}
+\end{frame}
+
+\begin{frame}[t]{Hướng A: chọn tập client có tính bổ trợ}\relax
+\small
+\[\Delta V(m\mid S)=\widehat V(S\cup\{m\})-\widehat V(S).\]
+\textbf{Ví dụ của bản thảo:} ba gradient vô hướng $(2,-2,1)$, trọng số bằng nhau; gradient quần thể $\bar g=1/3$.
+\begin{itemize}\item Cặp $\{1,2\}$ trung bình bằng $0$, sai số bình phương $1/9$.
+\item Cặp $\{1,3\}$ trung bình bằng $1.5$, sai số $49/36$.
+\item Hai gradient rất khác nhau có thể bổ trợ tốt khi xét cùng nhau.
+\end{itemize}
+\textbf{Thuật toán:} sinh quần thể lịch khả thi $\to$ lai/đột biến tập client và tài nguyên $\to$ sửa ràng buộc $\to$ đánh giá $\to$ chọn theo Pareto và đa dạng.
+\noteonly{Khớp gradient chỉ là proxy; phải kiểm tra loss validation. Giá trị biên có thể âm và không mặc định có tính submodular.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 2.2, 6; Algorithm 1.}
+\end{frame}
+
+\begin{frame}[t]{Hướng B: đánh giá đa mức fidelity}\relax
+\small
+\begin{center}\begin{tikzpicture}[node distance=.65cm]
+\node[box,text width=8cm](a){Mức 1: dự đoán từ sketch và lịch sử (rẻ)};
+\node[box,text width=8cm,below=of a](b){Mức 2: rollout giảm công hoặc giảm validation};
+\node[box,text width=8cm,below=of b](c){Mức 3: đánh giá tham chiếu đủ công việc};
+\draw[flow](a)--(b);\draw[flow](b)--(c);
+\end{tikzpicture}\end{center}
+Chỉ nâng mức các ứng viên có triển vọng hoặc cần khám phá; hiệu chuẩn sai lệch giữa các mức. Năng lượng/thời gian vật lý vẫn tính cho lịch đầy đủ.
+\eqmeaning{Dành đánh giá đắt cho ứng viên có thể cải thiện tập Pareto; không đồng nhất fidelity với probing vật lý.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 7; (37)--(42).}
+\end{frame}
+
+\begin{frame}[t]{Mã giả tìm kiếm đa mức và kiểm chứng}\relax
+\small
+\begin{enumerate}\item Chốt snapshot, ngân sách tìm kiếm và ngân sách audit độc lập.
+\item Sinh ứng viên; đánh giá tham chiếu một tập khởi tạo để hiệu chuẩn.
+\item Lặp: lai/đột biến, sửa ràng buộc, tính chi phí vật lý và dự đoán loss rẻ.
+\item Chọn ứng viên nâng fidelity theo lợi ích dự kiến trên chi phí; giữ tỷ lệ khám phá.
+\item Cập nhật predictor và hai kho: dự đoán tạm thời, tham chiếu đã kiểm chứng.
+\item Audit ứng viên cuối bằng cùng giao thức tham chiếu; tính lại quan hệ trội.
+\item Chọn và thực thi một lịch theo ưu tiên đã khai báo.
+\end{enumerate}
+\noteonly{Chỉ kho tham chiếu dùng để báo cáo chất lượng Pareto. Rollout giả lập không cập nhật checkpoint nguồn và không được tính là vòng FL thực thi.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 7; Algorithm 2.}
+\end{frame}
+
+\begin{frame}[t]{Hướng C: probing và lập lịch lại}\relax
+\small
+\begin{center}\begin{tikzpicture}[node distance=.5cm]
+\node[box,text width=8cm](a){Lịch sử $\mathcal H_k$: báo cáo cũ, kênh, pin};
+\node[box,text width=8cm,below=of a](b){Chọn probe $\to$ trả chi phí $\to$ nhận thông tin mới};
+\node[box,text width=8cm,below=of b](c){Cập nhật dự đoán $\to$ tối ưu lại lịch training};
+\draw[flow](a)--(b);\draw[flow](b)--(c);
+\end{tikzpicture}\end{center}
+Probe có thể lấy loss minibatch và gradient sketch. Chọn cả phương án không probe; client vẫn có thể training mà không cần probe mới.
+\eqmeaning{Thông tin đáng mua khi có khả năng thay đổi quyết định đủ để bù chi phí tải mô hình, tính toán, upload và chờ.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 2.3, 8; Algorithm 3.}
+\end{frame}
+
+\begin{frame}[t]{Đề xuất kết hợp với FSTPO}\relax
+\small
+\textbf{Ý tưởng tổng hợp của phần trình bày, cần kiểm chứng:}
+\begin{enumerate}\item Dùng actor FSTPO sinh lịch khởi tạo khả thi cho tìm kiếm tiến hóa; bổ sung lịch ngẫu nhiên để giữ đa dạng.
+\item Đánh giá lịch bằng bộ ba loss--energy--time; giữ baseline FSTPO trên cùng môi trường và ngân sách.
+\item Dùng predictor đa fidelity để sàng lọc và tham chiếu để xác nhận các cải thiện.
+\item Sau khi lõi ổn định, thêm tuổi thông tin và probing; mọi quyết định chỉ dùng quan sát được phép.
+\end{enumerate}
+\noteonly{Đây không phải thuật toán đã được hai bài chứng minh. Có thể nghiên cứu scheduler tiến hóa độc lập trước; warm-start bằng FSTPO là một ablation bổ sung.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 6--10; liên hệ với Yang và cộng sự, Sec. III.}
+\end{frame}
+
+\begin{frame}[t]{Lộ trình và tiêu chí kiểm chứng}\relax
+\small
+\begin{enumerate}\item Bắt đầu với 2 UAV, 6 client, cùng checkpoint; đặt client dữ liệu hiếm ở kênh yếu. Liệt kê tập con với phân bổ cố định để có mốc kiểm tra.
+\item So sánh chọn ngẫu nhiên, greedy kênh, FSTPO, NSGA-II và chọn tập có tính bổ trợ trên cùng thông tin/tài nguyên.
+\item Chỉ thêm đa fidelity nếu profiling chứng minh đánh giá tham chiếu đủ đắt và mức rẻ có ích.
+\item Báo cáo Pareto đã audit, test accuracy/loss, rare-class recall, thời gian/năng lượng, vi phạm deadline và chi phí optimizer.
+\item Ablation: bỏ set-aware, bỏ multi-fidelity, bỏ probing; so sánh với cùng chi phí tìm kiếm thực tế.
+\end{enumerate}
+\eqmeaning{Mục tiêu là chứng minh trade-off tốt hơn sau khi tính đủ chi phí, chưa khẳng định hiệu quả trước thực nghiệm.}
+\source{Information-Aware Multiobjective Evolutionary Optimization, bản thảo nghiên cứu, Sec. 9--10.}
+\end{frame}
+
+\begin{frame}[t]{Tài liệu tham khảo}
+\relax
+\small
+\begin{enumerate}
+\setlength{\itemsep}{.8em}
+\item Google Cloud. \emph{Federated learning: a guide to what it is and how it works}.\\
+{\scriptsize\url{https://cloud.google.com/discover/what-is-federated-learning}}\\
+Truy cập ngày 15/10/2026.
+\item X. Yang, J. Feng, L. Ma, L. Liu, Q. Pei và C. Wu.\\
+\emph{Federated Spatio-Temporal Policy Learning for Efficient Resource Management in UAV-Assisted IoT Edge Networks}.\\
+IEEE Internet of Things Journal, bản tác giả được chấp nhận, 2026.\\
+{\scriptsize\url{https://doi.org/10.1109/JIOT.2026.3727888}}
+\item H. B. McMahan và cộng sự. \emph{Communication-Efficient Learning of Deep Networks from Decentralized Data}. AISTATS, 2017.\\
+{\scriptsize\url{https://proceedings.mlr.press/v54/mcmahan17a.html}}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[t]{Tài liệu bổ sung cho phần 1 và phần 4}\relax
+\small
+\begin{itemize}
+\item McMahan và cộng sự. \emph{Communication-Efficient Learning of Deep Networks from Decentralized Data}. Bản arXiv 1602.05629v4, 26/01/2023; công bố gốc AISTATS 2017. Sec. 2, Algorithm 1 và phần thực nghiệm.\\
+\url{https://arxiv.org/abs/1602.05629}
+\item \emph{Information-Aware Multiobjective Evolutionary Optimization with Multi-Fidelity Evaluation for UAV-Assisted Federated Learning}. Research Working Draft, bản PDF người dùng cung cấp, 13 trang. Sec. 1--10, Algorithms 1--3.
+\end{itemize}
+\par\medskip
+Phần 4 phân biệt đề xuất của bản thảo và ý tưởng kết hợp với FSTPO; chưa coi các giả thuyết nghiên cứu là kết quả đã kiểm chứng.
+\end{frame}
+\end{document}

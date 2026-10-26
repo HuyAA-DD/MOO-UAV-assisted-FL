@@ -1,0 +1,1021 @@
+===== PAGE 1 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                     1
+
+    Federated Spatio-Temporal Policy Learning for Efficient
+  Resource Management in UAV-Assisted IoT Edge Networks
+
+                 Xiaoteng Yang, Jie Feng, Lichuan Ma, Lei Liu, Qingqi Pei, and Celimuge Wu
+
+
+
+
+    Abstract—Federated learning (FL) enables privacy-preserving   learning (FL) has emerged as a key paradigm for distributed
+  distributed intelligence in UAV-assisted Internet of Things (IoT)  model training without sharing raw data  [3]. However, in
+  edge networks. However, efficient policy design remains challeng-                                                                      infrastructure-limited scenarios, edge devices are often con-
+  ing due to the hybrid decision space, which couples combinatorial
+                                                                     strained by limited battery capacity and computational power,  device scheduling with continuous resource allocation, as well
+  as the long-term impact  of non-independent and  identically  making it difficult to support independent local model training
+  distributed (Non-IID) data on model convergence. In this paper,   [4]. In addition, traditional fixed base stations suffer from
+ we propose a spatio-temporal resource optimization framework   limited coverage and flexibility. To address these limitations,
+  for UAV-assisted edge computing services. We formulate a long-                                                                     integrating unmanned  aerial vehicles (UAVs) with mobile
+  term utility maximization problem that jointly considers learning
+                                                         edge computing (MEC) offers a promising solution, enabling  performance, energy consumption, and latency. To solve this
+  mixed-integer nonlinear problem, a federated spatio-temporal   reliable line-of-sight communication and flexible computing
+  policy optimization (FSTPO) approach is developed based on a   support for ground devices, thereby alleviating the deployment
+  constrained Markov game. The proposed method incorporates a   bottlenecks of FL in infrastructure-sparse environments [5]–
+  dual-channel spatio-temporal representation to capture wireless                                                                             [7].
+  dynamics and data distribution characteristics. In addition, a
+                                                                Despite these advantages, UAV-assisted FL systems intro-  hybrid action learning mechanism  is introduced to efficiently
+  handle the coupling between discrete scheduling and continuous   duce  significant challenges  in both system modelling and
+  resource  allocation. Simulation  results demonstrate  that  the   resource management. The high mobility of UAVs leads to
+  proposed approach outperforms benchmark schemes in terms of   dynamically evolving air–ground topologies, resulting in time-
+  system utility, learning accuracy, and resource efficiency, while                                                               varying and intermittent service availability [8]. Meanwhile,
+  achieving stable convergence under Non-IID environments.
+                                                                   the limited onboard computation and communication resources
+    Index Terms—Federated learning, UAV-assisted IoT networks,   intensify competition among devices [9]. Critically, due to dif-
+  resource management,  spatio-temporal  policy  learning, edge                                                                 ferences in sensing environments and task characteristics, local
+  computing.
+                                                                     datasets across IoT devices are inherently non-independent
+                                                        and identically distributed (Non-IID), which severely degrades
+                              I. INTRODUCTION                        the  stability of model aggregation. Given these competing
+  A. Background                                           demands,  efficient task offloading and resource scheduling
+                                                    become essential for bridging the learning requirements and    HE large-scale deployment of Internet of Things (IoT)
+                                                                   the available aerial resources [10], [11]. In particular, joint op-       devices has led to the continuous generation of mas-T                                                            timization of device association, task offloading, and resource  sive and heterogeneous data at the network edge  [1],  [2].
+                                                                     allocation has become a key research focus [12]. Under  increasingly  stringent privacy  constraints, federated
+                                                                    Existing work has made notable progress in energy effi-
+    This work was supported in part by the National Natural Science Foun-   ciency and latency optimization [7], [13]–[15]. Early studies
+  dation of China under Grants U24A20241 and 62271456, the Fundamental   primarily  rely on  optimization  theory and  game-theoretic
+  Research Funds for the Central Universities under Grants QTZX26142 and
+  QTZX25085, the Key Research and Development Programs of Shaanxi   approaches to address multi-user resource competition. For
+  under Grant 2025SYS-SYSZD-080, the Guangdong Basic and Applied Basic   instance, some works jointly optimize UAV trajectories and
+  Research Foundation under Grant 2025A1515012741, and the  Industrial   transmission power via alternating optimization or convex re-
+  Internet Innovation and Development Project under Grant ZC25T320059.
+  (Corresponding author: Lichuan Ma, Qingqi Pei.)                         laxation to minimize system delay. Heuristic approaches have
+    Xiaoteng Yang is with the School of Telecommunications Engineering, Xi-   also been explored for complex scenarios. Tian et al. inves-
+  dian University, Xi’an 710071, China (e-mail: xtengyang@stu.xidian.edu.cn).   tigated task offloading and scheduling in UAV-enabled MEC
+     Jie Feng  is with the School of Telecommunications Engineering, the
+  Shaanxi Key Laboratory of Blockchain and Secure Computing, Xidian Uni-   networks to enhance service satisfaction via user grouping and
+   versity, Xi’an 710071, China (e-mail: jiefengcl@163.com).                 genetic algorithms [16]. Wang et al. proposed a bi-criteria ant
+    Lichuan Ma and Qingqi  Pei  are with  the  State Key Laboratory  of   colony optimization framework to minimize system cost and
+  Integrated Services Network, the Shaanxi Key Laboratory of Blockchain
+  and Secure Computing, Xidian University, Xi’an 710071, China (e-mail:   completion time [17]. Zhao et al. employed Gibbs sampling
+  lcma@xidian.edu.cn, qqpei@mail.xidian.edu.cn).                      and matching theory to maximize quality of experience under
+    Lei Liu is with the Guangzhou Institute of Technology, Xidian University,   limited resources [18]. However, these methods generally rely
+  Guangzhou 510555, China, and also with the Key Laboratory of Computing
+  Power Network and Information Security, Ministry of Education, Qilu Uni-  on static or quasi-static assumptions and cannot capture the
+  versity of Technology (Shandong Academy of Sciences), Jinan 250014, China  dynamic coupling among communication, computation, and
+  (e-mail: leiliu@xidian.edu.cn).                                        learning processes in highly time-varying environments.
+    Celimuge Wu is with the Graduate School of Informatics and Engineering,
+  University of Electro-Communications, Chofu, Tokyo 182-8585, Japan (e-    With the increasing complexity and non-stationarity of wire-
+  mail: celimuge@uec.ac.jp).                                               less networks, research has increasingly shifted toward deep
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 2 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+  2
+
+
+  reinforcement learning (DRL) and FL-based joint optimization   B. Motivation and Contributions
+  [19]. DRL provides a promising approach for handling high-
+                                                              Motivated by the aforementioned discussion, we consider
+  dimensional, dynamic decision-making problems, while FL
+                                                             a UAV-assisted FL system in air–ground integrated networks,
+  enables distributed model training without sharing raw data.
+                                                        where mobile edge computing (MEC) servers are mounted
+ Lee et al. provided a comprehensive survey on FL-enabled
+                                                      on UAVs  to support  distributed model  training and  task
+  network management, highlighting the critical role of artificial
+                                                                  execution. This design is particularly motivated by scenarios
+  intelligence in addressing complex resource allocation chal-
+                                                                      in which fixed ground infrastructure is absent or operationally
+  lenges [20]. Building upon this paradigm, several studies have
+                                                                     impractical, such as post-disaster emergency response, remote-
+  explored DRL-driven resource optimization in heterogeneous
+                                                                 area IoT monitoring, and temporary field deployments, where
+  networks. Khan et al. proposed a federated DRL framework for
+                                              UAVs represent the only viable means of providing flexible,
+  joint discrete offloading and continuous resource allocation,
+                                                      on-demand edge computing and aggregation services. While
+  effectively reducing system cost [21]. Alqahtani et al. intro-
+                                                                           this architecture provides enhanced flexibility and coverage,
+  duced the FLARE framework to improve resource utilization
+                                                                   the coexistence of dynamic network topology, limited com-
+  through adaptive learning rate scheduling and gradient sparsifi-
+                                                             munication/computation resources, and severe Non-IID data
+  cation [22]. Zhou et al. developed a framework for customized
+                                                                       distribution poses significant challenges to efficient system de-
+  virtual reality (VR) streaming services. At the same time, Seo
+                                                                       sign. In particular, the strong coupling among device schedul-
+  et al. proposed a carbon-aware FL framework to reduce energy
+                                                                       ing, bandwidth allocation, and computation control makes it
+  consumption and emissions in cloud environments [23], [24].
+                                                                              difficult to achieve stable model convergence and efficient
+    In practical edge environments, the coexistence of hetero-
+                                                                resource utilization simultaneously.
+  geneous computation and communication resources further
+                                                                    In  this  paper, we  investigate a UAV-assisted  federated
+  complicates FL deployment. Devices differ significantly in
+                                                         edge learning framework  that  jointly optimizes communi-
+  terms of processing  capability, bandwidth  availability, and
+                                                                       cation, computation, and learning performance under  het-
+  energy constraints, which leads to highly uneven participa-
+                                                            erogeneous environments. Specifically, we develop a unified
+  tion in distributed training [25]. To address these challenges,
+                                                                 spatio-temporal resource optimization framework to maximize
+  researchers have explored various strategies, including split
+                                                           system utility while satisfying energy-efficiency, latency, and
+  learning and personalized FL. Peng et al. proposed the FedFold
+                                                            model-accuracy requirements. The main contributions of this
+  framework to improve training efficiency under Non-IID data
+                                                             paper are summarized as follows:
+  through progressive model partitioning [26]. Fan et al. devel-
+                                                                     • We develop a system model for UAV-assisted federated  oped a multi-agent DRL-based resource management scheme
+                                                              edge learning that jointly captures device access control,  for collaborative cloud-edge-device systems [27]. Qiang et
+                                                              bandwidth allocation, and computation resource adap-  al. applied adaptive parallel split learning to vehicular edge
+                                                                             tation under a dynamic air–ground topology. A system  computing scenarios [28], while Kwantwi et al. proposed a
+                                                                                     utility function is formulated to characterize the trade-  personalized FL framework to jointly optimize latency, energy
+                                                                             off among FL convergence performance, energy con-  consumption, and personalization [29]. For more dynamic en-
+                                                                  sumption, and latency, while explicitly incorporating data  vironments, Tang et al. proposed an online resource allocation
+                                                                      heterogeneity via gradient divergence.  algorithm that integrates Lyapunov optimization with DRL for
+                                                                     • We propose a federated spatio-temporal policy optimiza-  UAV-assisted systems [30]. Li et al. developed a distributed
+                                                                           tion (FSTPO) framework to address the resulting mixed-  offloading scheme for hotspot scenarios, and Karmakar  et
+                                                                          integer nonlinear optimization problem. The problem is  al. introduced FairLearn  to enhance  fairness and  security
+                                                               modelled as a decentralized, constrained Markov game,  in federated systems [31], [32]. Nevertheless, these studies
+                                                                    enabling  distributed,  scalable decision-making among  generally treat resource allocation and learning dynamics in
+                                                                      multiple UAV agents.  a decoupled manner and fail to capture the intrinsic coupling
+                                                                     • We design a dual-channel spatio-temporal graph-based among dynamic scheduling, resource constraints, and Non-
+                                                                                state representation that integrates physical communica-  IID data distributions. As a result, the long-term impact of
+                                                                           tion features and semantic information reflecting data  scheduling decisions on model convergence remains poorly
+                                                                         heterogeneity. This representation enhances the policy’s  understood, particularly in UAV-assisted FL systems operating
+                                                                                ability  to capture complex  correlations and improves  in highly dynamic air–ground environments.
+                                                                     robustness against Non-IID data distributions.    In summary, existing studies largely overlook the long-term
+                                                                     • Extensive experiments on Fashion-MNIST and CIFAR-10  coupling between dynamic scheduling decisions and model
+                                                                under Non-IID settings demonstrate that FSTPO achieves  convergence under Non-IID data distributions [3], [16], [19].
+                                                                       superior  utility, accuracy, and resource efficiency over  In highly dynamic UAV-assisted environments, scheduling
+                                                                                       all baselines while satisfying latency and reliability con-  strategies that rely solely on instantaneous physical states may
+                                                                                 straints across varying network scales.  introduce systematic bias by repeatedly excluding statistically
+  important devices, thereby deviating the global model from the    The rest of this paper is organized as follows. Section II
+  optimal convergence trajectory. Therefore, how to jointly de-   introduces the UAV-assisted federated learning system model
+  sign adaptive scheduling and resource allocation mechanisms  and problem formulation. Section III presents the proposed
+  that balance communication efficiency and learning robustness  FSTPO algorithm framework in detail. Section IV describes
+  remains an open and critical problem.                          the experimental settings and parameter configurations. Sec-
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 3 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                     3
+
+
+                                                               B. FL Model
+
+                                                              Consider a set of ground devices m ∈M, where each
+                                                               device locally stores an independent dataset denoted by Dm.
+                                                             Let Dm represent the number of data samples in Dm. For
+                                                                   the i-th sample in Dm, its feature vector and corresponding
+                                                                      label  are denoted by xm,i and  ym,i,  respectively, where
+                                                                               i ∈{1, 2, . . . , Dm}. The empirical loss function of device
+                               m over its local dataset is defined as
+
+                                                             Dm
+                                                                           1
+                                                     Lm(w) =  X ℓ(w; xm,i, ym,i),          (1)
+                                                Dm                                                                                          i=1
+
+                                                        where ℓ(·) denotes the loss function of a single sample, and
+  Fig. 1: The proposed UAV-assisted edge computing networks. w ∈Rd represents the global model parameter vector with
+                                                           dimension d. The global loss function is defined as
+
+                                                    Dm
+  tion V provides simulation results. Finally, Section VI con-             F(w) = X     Lm(w),              (2)
+                                                                                                                    Dtotal
+  cludes the paper and outlines future research directions.                   m∈M
+                                                        where Dtotal = Pm∈M Dm denotes the total number of data
+                                                           samples across all devices.
+       II. SYSTEM MODEL AND PROBLEM FORMULATION                                                            During the k-th communication round, only the devices with
+                                                               scheduling indicator skm,u = 1 are selected to participate in  A. Network Model
+                                                                         training. Each selected device first receives the global model
+   As illustrated in Fig. 1, we consider a UAV-assisted mo-  wk−1 via the downlink and performs local updates initialized
+  bile edge computing (MEC) system, where a  set of low-  from it. The local stochastic gradient descent (SGD) update is
+  altitude unmanned aerial vehicles (UAVs) is denoted by U =   expressed as
+  {1, 2, . . . , U}, and a set of ground mobile IoT devices (MIDs)
+  is denoted by M = {1, 2, . . . , M}. Each UAV is equipped    w(k,i)m  = w(k,i−1)m   −η ˆ∇Lm(w(k,i−1)m      ),   i ∈{1, . . . , I}, (3)
+  with an onboard MEC server that serves as an aerial node                                                        where η is the learning rate, ˆ∇Lm(·) is the stochastic gradient
+  for both model aggregation and computation offloading. The                                                       computed from sampled local data, and I denotes the number
+  system operation  is discretized into a sequence of global                                                                 of local iterations.
+  communication rounds indexed by k ∈K = {1, 2, . . . , K}. In                                                                   After completing I iterations, device m obtains its updated
+  the k-th round, the three-dimensional position of UAV u ∈U                                                                      local model wkm = w(k,I)m    , which  is then uploaded to  its  and the horizontal position of device m ∈M are denoted by
+                                                                  associated UAV.
+ qku = [xku, yku, Hu]T and pkm = [xkm, ykm, 0]T , respectively. Due                                                   Upon receiving local models, each UAV u ∈U performs
+  to node mobility, the air–ground network topology evolves
+                                                                    cluster-wise aggregation over the associated devices to gen-
+  dynamically across communication rounds, leading to time-
+                                                                      erate an edge model wku. Subsequently, global aggregation  varying channel conditions and communication performance.
+                                                                                 is conducted across  all UAVs by a ground-based  central
+  In each communication round, ground devices generate both
+                                                               aggregation server via a dedicated backhaul link, yielding the
+  local training updates and computation tasks. To characterize
+                                                            updated global model
+  the device association and task offloading decisions, we intro-
+  duce a binary scheduling variable skm,u ∈{0, 1}. Specifically,        Pu∈U Pm∈M skm,uDm wku                                                  wk =                                              .          (4)
+  skm,u = 1 indicates that device m is associated with UAV u in          Pu∈U Pm∈M skm,uDm
+  round k and offloads its task to UAV u; otherwise, skm,u = 0
+  indicates that no connection is established between them.     The updated global model wk  is then broadcast back  to
+                                                                                 all UAVs at the beginning of the next round for downlink    Given the scheduling decisions, the system operates as
+                                                                       distribution to selected devices.  follows. At the beginning of each round, devices perform
+                                                   Due to the heterogeneity of local environments and task  local model  training based on  their  private  datasets and
+                                                                         characteristics, the data distributions across devices are gener-  generate updated model parameters. Meanwhile, computation
+                                                                        ally non-IID, which leads to deviations between local gradients  tasks—representing latency-sensitive application-layer work-
+                                                        and the global optimization direction. To characterize this ef-  loads independent of FL training, such as inference queries
+                                                                              fect, we introduce the gradient divergence metric. Specifically,  and sensor data processing—are also generated at each de-
+                                                                   the squared upper bound of the deviation between the local  vice. Subsequently, devices establish wireless links with their
+                                                                  gradient of device m and the global gradient is defined as  associated UAVs to upload both local model parameters and
+  task  data. Upon receiving the uploaded information, each          (δk−1m  )2 = ∇Lm(wk−1) −∇F(wk−1) 2 ,      (5)
+ UAV executes edge computation for the offloaded tasks and
+  aggregates  the model updates from  associated devices  to  where ∇Lm(·) and ∇F(·) denote the true local and global
+  produce an updated global model.                                gradients, respectively. A larger value of (δk−1m  )2 indicates
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 4 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+  4
+
+
+  a greater discrepancy between the local data distribution of   uplink transmission rate from device m to UAV u is given
+  device m and the global data distribution.                  by
+   Due to the limited computation capability of UAVs and                           Pmhkm,u !
+                                                      Rkm,u = bkm,u log2  1 +                  ,          (9)  constrained wireless bandwidth, it is impractical to schedule                                                                                                N0bkm,u
+  all devices in each round. Therefore, the scheduling policy
+  must balance channel conditions and data quality. To this end,  where bkm,u ≥0 denotes the bandwidth allocated by UAV
+ we define the federated learning accuracy utility in the k-th  u to device m, Pm is the transmit power of device m, and
+  round as                                      N0 represents the power spectral density of additive white
+                                                           Gaussian noise.                 Dm
+      ΥkF L = X X skm,u     exp −λ(δk−1m  )2  ,    (6)
+                                      Dtotal              u∈U m∈M
+                                                        D. Energy Model
+  where λ > 0 is a penalty coefficient controlling the sensitivity                                                                    In this section, we characterize the energy consumption of
+  of the utility to gradient divergence. This formulation assigns                                                                   the air–ground collaborative system in the k-th communication
+  higher utility to scheduling decisions that prioritize devices                                                               round. The  total energy consumption comprises the  local
+  with low gradient divergence, providing a differentiable sur-                                                            computation and transmission energy of ground devices, as
+  rogate that guides the policy toward selections beneficial for                                                               well as the edge-computation energy of UAVs.
+  global model convergence under Non-IID data distributions.                                                             For each ground device m ∈M, energy consumption arises
+ To ensure the learning performance, we  further introduce                                                        from local federated learning training and data uploading.
+  the  global model accuracy metric Acck, which  evaluates                                                      Only the scheduled devices participate in the above operations,
+  the prediction accuracy of wk on an independent validation                                                        which are controlled by the binary variable skm,u. Specifically,
+  dataset. After K communication rounds, the final model is                                                                                         if device m  is scheduled,  it performs I  local  iterations.
+  required to satisfy AccK ≥Acctarget, where Acctarget denotes                                                             Let cm denote the required CPU cycles per  bit and fmk
+  the predefined accuracy threshold.                                                             denote the CPU frequency. The local computation delay and
+                                                            energy consumption are given by tcomp,km   = IDmcm/fmk and
+                                                         Ecomp,km   = κm(fm)2(IDmcm),k               respectively. The communica-  C. Communication Model
+                                                                      tion energy consumption for uploading data to UAV u is given
+    In the k-th communication round, once the scheduling de-  by Ecomm,km,u  = skm,uPm Ωkm/Rkm,u [19].
+  cision is determined, each selected ground device uploads two     For each UAV u ∈U, the received task vkm is processed
+  types of data to its associated UAV: the locally updated model  by its onboard MEC server. Let cu denote the required CPU
+  parameters wkm for federated learning, and the computation   cycles per bit of task data and fu denote the aggregate multi-
+  task data for offloading. Let Z denote the data size of the   core computational throughput of the UAV processor. The
+  compressed local model, reflecting the output of a standard   edge computation delay and energy consumption are given
+  compression pipeline including fixed-point quantization and  by tedge,km,u  = vkmcu/fu and Eedge,ku,m  = κu(fu)2(vkmcu), which
+  gradient sparsification applied uniformly across all devices.   are incurred only when skm,u = 1. UAV propulsion energy
+  Meanwhile, let vkm represent the size of the computation task   during hovering is not included, as  it is independent of the
+  generated by device m in the k-th round. Accordingly, the   scheduling and resource allocation decision variables and does
+  total amount of data to be transmitted by device m is given   not affect the relative comparison among methods. To ensure
+ by Ωkm = Z + vkm.                                             synchronization, the system execution time is defined as
+  A frequency division multiple access (FDMA) scheme is
+                                                                            m,u  tcomp,km   + Ωkm/Rkm,u + tedge,km,u       .  adopted, in which each UAV u is assigned an independent   T k = m∈M,maxu∈U  sk
+  spectrum pool of total bandwidth Bmax, with non-overlapping                                                           (10)
+  allocations across UAVs to eliminate inter-UAV co-channel     For notational simplicity, we define the  total per-device
+  interference. Based on the system geometry, the Euclidean   service time as tkm,u = tcomp,km   + Ωkm/Rkm,u + tedge,km,u   , so that
+  distance between device m and UAV u in the k-th round is  T k = maxm∈M,u∈U{skm,utkm,u}. We further define the per-
+  expressed as [33]                                             device energy consumption as Ekm,u = Ecomp,km   + Ecomm,km,u  +
+                                                               Eedge,ku,m    . Accordingly, the total system energy consumption in        q         dkm,u =    (xku −xkm)2 + (yku −ykm)2 + H2u,      (7)   the k-th round is given by
+
+    Given that low-altitude UAV air-to-ground links typically             Ektotal = X X skm,uEkm,u.           (11)
+  exhibit a high probability of line-of-sight (LoS) transmission,                       u∈U m∈M
+  the free-space path-loss model is adopted. Accordingly, the
+  channel gain between device m and UAV u is given by        E. Reliability Model
+                              β0                               In this section, we characterize communication reliability by
+                    hkm,u =             ,                    (8)   accounting for small-scale fading. An outage-based model is                                  (dkm,u)2
+                                                            adopted to quantify the probability of successful transmission.
+  where β0 denotes the channel power gain  at a reference   Specifically, the instantaneous channel power gain  ˜hkm,u  is
+  distance. According  to Shannon’s theorem, the achievable  assumed to follow an exponential distribution with mean hkm,u.
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 5 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                     5
+
+
+  Based on this, the instantaneous signal-to-noise ratio (SNR) at  and CPU frequency fmk  to balance learning performance and
+ UAV u can be expressed as [15]                               resource consumption. Specifically, constraints (C1) and (C2)
+                                                              ensure that each device can be associated with at most one
+                           Pm˜hkm,u
+                   γkm,u =              ,                  (12)  UAV in each communication round. Constraints (C3) and
+                              N0bkm,u                       (C4) regulate the bandwidth allocation such that the  total
+  where γkm,u represents the instantaneous SNR.                  allocated bandwidth at each UAV does not exceed its capacity
+   To ensure successful decoding, the instantaneous SNR must  Bmax while remaining non-negative. Constraint (C5) ensures
+                                                                        that the CPU frequency operates within feasible hardware  exceed a predefined threshold γth. Otherwise, a transmission
+                                                                           limits. Constraint (C6) guarantees that the latency of scheduled  outage occurs. Accordingly, the communication success prob-
+                                                                devices does not exceed the maximum allowable delay Tmax.  ability of device m associated with UAV u in the k-th round
+  is denoted by Γkm,u, which can be written as                   Constraint (C7) enforces reliable communication by requiring
+                                                                   the success probability to exceed a predefined threshold Γmin.
+                           !                                                                        Finally,                                                                             constraint                                                                            (C8)                                                                                      ensures                                                                                                            that the                                                                                                              trained                                                                                                                 global model                                          m,u
+                                                                                 ,   (13)    Γkm,u = Pr γkm,u ≥γth = exp  −γthN0bk                                                                achieves                                                                            the target                                                                               accuracy                                                                                                                     after                                                     K communication                                                                                              Acctarget                                    Pmhkm,u
+                                                                rounds. The formulated problem is a mixed-integer nonlinear
+  where γth denotes the SNR threshold for successful decoding.  programming (MINLP) problem due to the coupling between
+                                                                binary scheduling variables and continuous resource allocation
+  F. Problem Formulation                                           variables, making it intractable for conventional optimization
+                                                            methods.    In the considered system, ground devices perform local
+  training and simultaneously upload both model parameters and
+  computation tasks to their associated UAVs. The UAVs further
+                                                                                               III. THE FSTPO FRAMEWORK
+  execute edge computation and aggregation. Accordingly, the
+  system incurs energy consumption and latency in each com-    To address the resulting MINLP problem, where discrete
+  munication round while achieving a certain level of learning   scheduling variables skm,u are tightly coupled with continuous
+  performance. To jointly evaluate the tradeoff between model   resource variables bkm,u and fm,k  conventional DRL approaches
+  accuracy and resource consumption, we define the system   typically rely on discretization or relaxation techniques, which
+  utility in the k-th round as                           may lead to significant performance degradation in hybrid
+         U k = ω1ΥkF L −ω2Ektotal −ω3T k,         (14)   action spaces.
+                                                       To overcome this limitation, we propose a Federated Spatio-
+  where ω1, ω2, and ω3  are positive weighting  coefficients   Temporal Policy Optimization (FSTPO) framework. As  il-
+  that balance the importance of learning performance, energy   lustrated  in  Fig.  2,  the system  is modelled  as a decen-
+  consumption, and  latency,  respectively. The weighted-sum   tralized constrained Markov game, where each UAV agent
+  formulation parameterizes the Pareto-optimal trade-offs among   independently learns its policy via an actor–critic architecture.
+  the three objectives, with coefficients calibrated to bring the  The Actor network generates feasible hybrid actions directly
+  terms into a comparable numerical scale.                    from high-dimensional spatio-temporal states, while the Critic
+   Our objective is to maximize the cumulative utility over the   network evaluates long-term cumulative rewards to guide pol-
+  entire training process by jointly optimizing device scheduling,   icy updates. A federated learning mechanism is incorporated
+  bandwidth allocation, and CPU frequency control, subject to   to enable collaborative policy sharing among UAV agents,
+  system resource and reliability constraints. The problem  is   thereby improving  overall system performance under  dis-
+  formulated as                                                      tributed decision-making constraints. The proposed framework
+                   K                               adopts an offline training and online deployment paradigm: the
+             max  X U k                  RL policy is trained to convergence in a simulated environment
+                 skm,u, bkm,u,f mk   k=1                                 prior to deployment, after which each UAV executes only the
+              s.t.  (C1) skm,u ∈{0, 1},  ∀m, u, k,                 forward pass of the trained Actor network during online FL
+                                                                   operation, imposing negligible inference overhead.
+             (C2) X skm,u ≤1,  ∀m, k,
+                 u∈U
+             (C3) X skm,ubkm,u ≤Bmax,  ∀u, k,                                                          (15)   A. Dual-Channel Spatio-Temporal Network
+            m∈M
+                                                   Due to the strong coupling among dynamic wireless chan-             (C4) bkm,u ≥0,  ∀m, u, k,
+                                                                         nels, device topology, and data heterogeneity, conventional
+             (C5) fmmin ≤fmk ≤fmmax ,  ∀m, k,               vector-based state representations are insufficient to capture
+             (C6) skm,u tkm,u ≤Tmax,  ∀m, u, k,               the structured correlations among multi-dimensional features.
+                                                     To address  this, we design a dual-channel spatio-temporal             (C7) Γkm,u ≥Γmin,  ∀m, u, k,
+                                                                perception network as a shared state encoder for both the Actor
+             (C8) AccK ≥Acctarget.                                                        and Critic networks.
+   The above optimization problem aims to determine the    At the k-th communication round, for each UAV u ∈U, a
+  optimal device scheduling skm,u, bandwidth allocation bkm,u,   local physical topology graph Gkphy is constructed based on its
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 6 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+  6
+
+
+
+
+
+                                     Fig. 2: The structure of the proposed FSTPO Framework.
+
+
+  associated device set N(u). The edge features are defined by   Algorithm 1: Dual-Channel Spatio-Temporal Percep-
+  the large-scale channel gain and Euclidean distance as            tion Encoding
+                   ekm,u = [hkm,u, dkm,u].                (16)     Input: Device features {xkm}, channel states
+                                                              {hkm,u, dkm,u}, divergence {(δk−1m  )2}
+  A graph attention mechanism is then employed to aggre-    Output: Embedding Eku
+  gate neighbourhood information, yielding the spatial feature    1 for each UAV u ∈U do
+  representation                                                            2     Construct physical graph Gkphy based on N(u);
+                                                                              3     for each device m ∈N(u) do
+                           !
+                                                                                       m,u ←[hkm,u, dkm,u];       ˜xku,phy = ReLU X αkm,uWp xkm ∥ekm,u     ,    (17)    4       Compute edge feature ek
+              m∈M                                            5    Aggregate spatial features: ˜xku,phy ←
+  where xkm denotes the input feature of device m, αkm,u is the       ReLU Pm∈N (u) αkm,uWp[xkm ∥ekm,u]  ;
+  attention coefficient, and Wp is a learnable weight matrix.       6    Temporal update via LSTM: (hku,phy, Cku,phy) ←
+   To capture temporal dynamics induced by time-varying        LSTM(˜xku,phy, hk−1u,phy, Ck−1u,phy);
+  channels and small-scale fading, the spatial features are further    7     Construct semantic graph Gkfed;
+  processed by a  single-layer  unidirectional long short-term    8     Extract semantic feature: hku,fed ←GCN(Gkfed);
+ memory (LSTM) module with hidden dimension dh = 128.    9    Compute fusion gate:
+ The update process is expressed as
+                                                           gk ←σ Wg[hku,phy ∥hku,fed]  ;
+                                                                             10    Fuse features:            f uk = σ Wxf ˜xku,phy + Whfhk−1u,phy + bf   ,     (18)
+                                                   Eku ←gk ⊙hku,phy + (1 −gk) ⊙hku,fed;
+  Cku,phy = fuk ⊙Ck−1u,phy                                              11 return Eku;
+       + iku ⊙tanh Wxc˜xku,phy + Whchk−1u,phy + bc  ,
+                                                          (19)
+  where hk−1u,phy and Ck−1u,phy denote the hidden state and cell state      Finally, a gating mechanism is introduced to adaptively fuse
+  from the previous round, respectively. f uk and iku represent the   the physical and semantic representations, yielding the unified
+  forget gate and input gate, σ(·) is the sigmoid function, and   spatio-temporal embedding
+ ⊙denotes element-wise multiplication.
+    In  parallel, to capture the impact of data heterogeneity          Eku = gk ⊙hku,phy + (1 −gk) ⊙hku,fed,       (20)
+  in federated learning, a semantic graph Gkfed  is constructed
+  based on the gradient divergence (δk−1m  )2. A graph convolution  where gk = σ(Wg[hku,phy ∥hku,fed]) is a learnable gating
+  operation is applied to extract semantic features, denoted by   vector that dynamically adjusts the relative contribution of
+ hku,fed, which reflect the contribution of different devices to   each channel based on the current network state. The fused
+  global model convergence.                                      representation Eku  is then used as the input to the policy
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 7 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                     7
+
+
+  network for subsequent decision-making, as summarized in  where ω1, ω2, ω3 ≥0 are weighting coefficients that balance
+  Algorithm 1.                                                   federated learning performance, energy consumption, and la-
+                                                                      tency, respectively.
+  B. State Space and Action Space                           To account for the latency constraint (C6) and reliability
+    In the proposed framework, each RL agent corresponds   constraint (C7), two instantaneous cost signals are introduced
+  to one UAV u ∈U. The local observation state of UAV   to quantify constraint violations
+                                                                                                     k −Tmax    , u at the k-th communication round  is defined as sku, cap-           cku,1 = X max  0, skm,u T
+  turing both communication conditions and federated learning                                              m∈M
+  dynamics through a set of heterogeneous features, including                                                           (24)
+                                                                        cku,2 = X max  0, skm,u Γmin −Γkm,u    .  the historical channel state sequence Hk−τ:ku       , the geometric
+  distance vector Dku between devices and the UAV, the gradient           m∈M
+  divergence vector δk−1u    reflecting data heterogeneity, and the     Based on the above  definitions, the policy optimization
+  remaining spectrum resource Bkrem. Accordingly, the state is   problem is formulated as a constrained reinforcement learning
+  expressed as                                                problem, where the objective is to maximize the expected cu-
+                                                               mulative reward while satisfying long-term average constraints
+              sku =  Hk−τ:ku      , Dku, δk−1u    , Bkrem   .         (21)               K                                                            "      #
+   The action space comprises both discrete scheduling de-        max  Eπ X γkrku                                                                    π
+  cisions and continuous resource-allocation variables, forming                    k=1                                                                                                                          (25)
+  a hybrid space. Specifically, the discrete variable skm,u deter-                " K     #
+                                                                                                                      u,i  ≤di,   i ∈{1, 2},  mines device association, while bkm,u and fmk represent band-                    s.t.  Eπ X γkck
+  width allocation and CPU frequency control, respectively. To                    k=1
+  enable end-to-end learning in such hybrid spaces, a Gumbel–  where π denotes the policy, γ ∈(0, 1) is the discount factor,
+  Softmax relaxation  is adopted to approximate the discrete  and di represents the tolerance threshold for each constraint.
+  scheduling decisions. As τg →0, the relaxed variable con-   This formulation decouples system utility optimization from
+  verges in distribution to a hard categorical sample, recovering   constraint satisfaction, progressively driving the system toward
+  the binary scheduling decision. In our implementation, τg is   meeting the global accuracy constraint (C8).
+  annealed from 1.0 to 0.05 over training, progressively sharp-
+  ening the relaxation toward discrete decisions. The relaxed  D. Policy Optimization
+  scheduling variable ˜skm,u is formulated as                    To achieve efficient policy optimization under latency and
+                   exp (ρkm,u + gm,u)/τg                      reliability constraints, the FSTPO framework adopts a primal–
+                 ˜skm,u =                                               ,       (22)   dual proximal policy optimization (PPO) approach. The Actor
+        Pj∈U exp (ρkm,j + gm,j)/τg
+                                                          network parameter θu is optimized by maximizing a clipped
+  where ρkm,u denotes the scheduling logits generated by the   surrogate objective with constraint-aware advantage estimation
+  Actor network, gm,u represents Gumbel noise, and τg is the                                                                        h                                       i  temperature parameter.                                 LA(θu) = Eπθu min µku ˆAktotal, clip(µku, 1 −ϵ, 1 + ϵ)ˆAktotal     ,
+    For continuous resource allocation, Beta distributions are                                                           (26)
+ employed to model bounded decision variables. Specifically,  where µku = πθu(aku   |  sku)/πθu,old(aku   |  sku) denotes the
+  the normalized bandwidth allocation coefficient xkm,u and CPU   importance sampling ratio, and ϵ is the clipping parameter. The
+  allocation coefficient ykm are sampled as xkm,u ∼Beta(αb, βb),   advantage terms are estimated using generalized advantage
+  ykm ∼Beta(αf, βf), where αb, βb, αf, βf  are distribution   estimation (GAE).
+  parameters generated by the Actor network.                  To jointly account for system utility and constraint satisfac-
+   To ensure consistency between scheduling and resource   tion, a weighted advantage function is introduced as
+  allocation, a forward masking mechanism couples the two                  ˆAktotal = ˆAkr −λ1 ˆAkc,1 −λ2 ˆAkc,2,          (27)
+  decisions: resource allocation is activated only when the corre-
+  sponding device is selected, and suppressed to zero otherwise.  where ˆAkr denotes the reward advantage, ˆAkc,i represents the
+ At inference time, the binary scheduling decision is recovered   cost advantage associated with the i-th constraint, and λi is
+  via an argmax operation over the scheduling logits, which   the corresponding Lagrange multiplier.
+  exactly satisfies constraints (C1) and (C2). This mechanism    The Lagrange multipliers are updated via projected gradient
+  guarantees  feasibility while preserving  differentiability  for   ascent with step size ηλ
+  policy learning.
+                                                                      λ(t+1)i   = max n0, λ(t)i + ηλ Eπ[cku,i] −di o .     (28)
+  C. Reward Function                                                      Under Slater’s condition, this primal–dual iteration converges
+   Under  the constrained Markov game  formulation, each   to a saddle point of the Lagrangian, guaranteeing asymptotic
+  agent corresponds to one UAV u ∈U. The immediate reward   constraint satisfaction.
+  of agent u at the k-th round is aligned with the system utility    To improve convergence efficiency under dynamic network
+  objective                                                         topologies, a topology-aware federated policy sharing mech-
+              rku = ω1ΥkF L −ω2Ektotal −ω3T k,          (23)   anism  is incorporated. Every Eshare  training episodes, the
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 8 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+  8
+
+
+                                                                            Table I: Simulation Parameters   Algorithm 2: Federated Spatio-Temporal Policy Opti-
+   mization (FSTPO)                                                     Parameter                     Value
+    Input: Episodes Emax, horizon K, step sizes ηθ, ηλ,                    Service area                  1000 × 1000 m2
+            clipping ϵ, sharing interval Eshare                          Number of UAVs U            3 ∼6
+    Output: Optimized Actor parameters {θu}                    UAV altitude Hu              80 ∼120 m
+                                                                     Number of devices M          10 ∼60
+   1 Initialize Actor πθu, Critic Vψu, multipliers
+                                                                             Bandwidth capacity Bmax       15 ∼25 MHz
+     λ1, λ2 ←0;
+                                                                                     Transmit power Pm            20 ∼24 dBm
+   2 for e = 1 to Emax do                                                    Noise spectral density N0      −174 dBm/Hz
+   3     for each UAV u ∈U do                                             Channel gain β0            −30 dB
+   4          Initialize state s0u;                                           Model size Z                    2.0 ∼5.5 MB
+   5        for k = 0 to K −1 do                                          Task size vkm                    1.0 ∼5.0 MB
+   6          Encode state Eku ←Encoder(sku);                           Device CPU frequency fm       0.5 ∼2.5 GHz
+   7          Sample action aku ∼πθu(·|Eku);                     UAV aggregate throughput fu    8 ∼12 GHz
+   8           Execute action and observe rku, cku,1, cku,2,             CPU cycles cm, cu            800 ∼1200 cycles/bit
+                                                                                     Capacitance coefficient κm, κu   10−28
+              sk+1u    ;                                                              Max delay Tmax              5 s
+   9            Store transition in Du;                                                          SNR threshold Γmin           5 dB
+  10       Compute advantages ˆAkr, ˆAkc,1, ˆAkc,2 via GAE;
+  11         ˆAktotal ←ˆAkr −λ1 ˆAkc,1 −λ2 ˆAkc,2;
+                                                                   scaling as O(K · M 2dh + U · Nepoch · B · d2h), which grows  12       Update Actor: θu ←θu + ηθ∇θuLA(θu);
+                                                                       linearly with the number of communication rounds K and  13       Update Critic: ψu ←ψu −ηθ∇ψuLV (ψu);
+                                              UAVs U.  14       Update multipliers:
+            λi ←max{0, λi + ηλ(E[cku,i] −di)},
+               i ∈{1, 2};                                                       IV. EXPERIMENTAL SETTINGS
+  15        Clear buffer Du;                                To evaluate the performance of the proposed FSTPO frame-
+  16       if e mod Eshare == 0 then                           work, a three-dimensional air–ground collaborative MEC sce-
+  17        Aggregate global policy: θglob ←Pu∈U wuθu;       nario is constructed. The target service area is set to 1000 ×
+  18        for each UAV u ∈U do                         1000 m2. The number of UAVs U is randomly selected from
+  19            Soft update: θu ←τθglob + (1 −τ)θu;              [3, 6], and their flight altitudes Hu are uniformly distributed
+                                                                within [80, 120] m. The number of ground devices M varies
+  20 return {θu};                                               within [10, 60]. The initial positions of devices are uniformly
+                                                                      distributed over the target area and evolve according to a ran-
+                                              dom walk mobility model during communication. To enhance
+                                                                   the generality of the simulation results,  all communication
+  Actor parameters across UAVs are aggregated via weighted
+                                                        and computation parameters are independently sampled from
+ model averaging, where aggregation weights are determined
+                                                                predefined intervals unless otherwise specified. The detailed
+ by current network connectivity. The aggregation weight is
+                                                             parameter settings are summarized in Table I [7], [12], [19],
+ wu = Pm skm,u/ Pi∈U Pm skm,i, proportional to each UAV’s                                                                       [33]. Each experiment  is repeated multiple times, and the
+  active device count. Each UAV then performs a soft update
+                                                                         results are averaged.
+  to integrate the global policy with its local policy, balancing
+                                                      The experiments are conducted on the Fashion-MNIST
+  global consistency and local adaptability. The overall proce-
+                                                        and CIFAR-10 datasets for image classification. The input
+  dure is summarized in Algorithm 2.
+                                                            dimensions are 28 × 28 grayscale images and 32 × 32 colour
+                                                              images, respectively. A lightweight convolutional neural net-
+  E. Complexity Analysis                                                     work (CNN) is adopted as the global model, trained using the
+   The computational complexity of Algorithm 1 per UAV per   cross-entropy loss function. To model data heterogeneity, the
+  round  is O(|N(u)| · dh · (dx + de) + |N(u)|2 · dh + d2h),   dataset is partitioned across devices according to a Dirichlet
+  where dh  is the hidden dimension and dx, de denote the   distribution with parameter α ∈[0.3, 0.7], yielding non-IID
+  node and edge feature dimensions,  respectively. Since  all   local datasets. This setting induces heterogeneous data distri-
+ UAV agents execute Algorithm 1 in parallel, the total per-   butions across devices, which is consistent with the gradient
+  round encoding complexity  scales  as O(M 2dh/U) under   divergence metric used in the proposed framework. The total
+  uniform device distribution, confirming that the decentralized  number of global communication rounds is set to K = 100,
+  architecture reduces per-agent complexity linearly with the  and the number of local training iterations is randomly se-
+ number of UAVs. For Algorithm 2, the Actor update per   lected from  [3, 7]. The batch size  is 64, and the learning
+  agent per episode requires O(Nepoch · B · d2h) operations,   rate is η = 0.01. The target accuracy thresholds are set to
+  which is approximately two orders of magnitude smaller than  85% for Fashion-MNIST and 75% for CIFAR-10, calibrated
+  the FL simulation cost per episode and contributes less than   to represent approximately 90% of the centralized training
+ 10% of total training time. The overall per-episode training   accuracy ceiling under the adopted model architecture and
+  complexity  is  therefore dominated by  the FL  simulation,   dataset partitioning scheme, ensuring the accuracy constraint
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 9 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                     9
+
+
+  is neither trivially satisfiable nor infeasible within K = 100            200                                                                                60                                FSTPO                 14
+
+                                                                                                                                                                                                                                                                                                       Lagrange                                                                                                                                                                                                                                                                                                                                                                 Multiplier  1  rounds.                                                                                                                                                           175                                                                                50                               PPO                                                                                                                                                                                                                                                                                                                                          12                                                                                                                                                                                                                                                                                                                     Threshold
+   Under the constrained Markov game framework, each UAV            150                                                                                40                                                                  10 1                                                                                                                                                                                                                                                                                                                                                                                           Utility 125
+  independently runs an Actor–Critic architecture trained using                                                                                                                                                                                                                                                                                                                                          8                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  Multiplier                                                                                                                                                                                                                                                                                                                                     System 100                                                                                              Cost 30
+  the Adam optimizer. The learning rates of the Actor and             75                                                                                                                      Delay 20                                                                  6                                                                                                                                                                                                                                                                                                                                                                                                                                                 Expected                                           FSTPO                                                                                                                                                                                                                               Lagrange
+                                                                                                                                                                                                                                                                                                                                          4  Critic networks are set to 10−4 and 3 × 10−4, respectively.             50                                       PPO
+                                                                                                                                                    MADDPG                  10
+                                                                                                                                                                                                                          Greedy
+                                                                                                                                                                                                                                                                                                                                          2 The temporal window length  is τ =  3, and the LSTM             25                                                                                                                                                                                                           FedAvg
+                                                                                                                                                                                             Random                     0  hidden dimension is 128. The Gumbel–Softmax temperature              0                                                                                                                                                    0
+
+                                                                                                                                                                                                         Training                                                                                                                                                                                                      Episodes                                                                                                                                                                                                                                                                                          Training                                                                                                                                                                                                                                                                                  Episodes  is annealed from 1.0 to 0.05 over training. The PPO clipping                0      250     500(a) System750    1000    1250    1500    1750    2000                0      250     500     750    1000    1250    1500    1750    2000                                                                                                                                                                                                                                           Utility                                                                                                                                                                                             Convergence                                        (b) Evolution of delay                                                                                                                                                                                                                                                                                                                 violation                                                                                                                                                                                                                                                                                                                     cost and Lagrange multiplier
+  parameter is ϵ = 0.2, and the discount factor is γ = 0.99.
+                                                                     Fig. 3: Convergence of system utility and delay violation cost. The Lagrange multiplier step size is ηλ = 0.05. The utility
+  weights are set as ω1 = 1, ω2 = 0.1, and ω3 = 0.5, calibrated
+  to bring the three utility terms into a comparable numerical             2.5                                                                               2.5
+  scale given their differing physical units. The federated policy             2.0                                                                               2.0
+  sharing interval is Eshare = 5, the soft update coefficient is        F(w)                                                                       F(w)
+  ηf = 0.01, and the maximum number of training episodes is         Loss 1.5                                                                            Loss 1.5
+ Emax = 2000.                                                                                                                                                                                                                                                                                                                  Empirical 1.0                                                                                                                                                                            Empirical 1.0
+    For fair comparison, all baseline methods are implemented             Global                                                                                                                         Global          FSTPOPPO
+  under  the same system  settings,  including  identical  state             0.5                                                                               0.5      MADDPGGreedy
+  information, action constraints, and resource limitations. The                                                                                      FedAvgRandom
+  following baseline algorithms are considered for comparison:             0.0 0         20         40         60         80        100          0.0 0         20         40         60         80        100
+                                                                                                                                             Communication Rounds k                                    Communication Rounds k
+    1) MADDPG: A multi-agent deep deterministic policy gra-                               (a) Fashion-MNIST (Non-IID)                                            (b) CIFAR-10 (Non-IID)
+        dient method that outputs continuous resource allocation       Fig. 4: Global empirical loss under different policies.
+        variables bkm,u and fm,k  with heuristic thresholding ap-
+        plied for discrete scheduling decisions.
+    2) Greedy: Devices are associated with UAVs based on   decoupling, which avoids the policy oscillations induced by
+        instantaneous channel gains, and bandwidth resources   rigid discretization in MADDPG. The constraint-handling ef-
+        are equally allocated among connected devices.           ficacy is confirmed in Fig. 3(b): while PPO sustains a continu-
+    3) PPO: A standard proximal policy optimization method   ous delay violation above 5, FSTPO’s primal–dual mechanism
+       without constraint handling, where a multilayer percep-   drives λ1 to penalize violations and restore feasibility, with the
+        tron replaces the proposed graph-based encoder, and no   violation cost converging to 0.
+        federated policy sharing is employed.                      This stable optimization trajectory is further corroborated
+    4) Random: Scheduling and resource allocation decisions  by the global empirical loss F(w) depicted in Fig. 4. FSTPO
+        are randomly generated within the feasible region de-   reaches the minimum loss with the tightest standard deviation.
+        fined by system constraints.                 A notable crossover effect is observed in the Greedy policy:
+    5) FedAvg: A classical federated learning approach where   despite exhibiting the steepest initial loss reduction by ag-
+       a fixed number of devices are randomly selected in each   gressively exploiting devices with excellent physical channel
+       round, with equal bandwidth allocation.                   conditions,  its  trajectory severely  stagnates and rebounds.
+                                                             This confirms the destructive impact of gradient divergence
+                V. EXPERIMENTAL RESULTS                (δk−1m  )2; persistently aggregating highly Non-IID data  ulti-
+   To comprehensively evaluate the performance of the pro-   mately causes the global model  to deviate from the  true
+  posed FSTPO framework, we categorize the experimental  optimum. In contrast, FSTPO ensures a smooth descent by
+  analysis into five dimensions: convergence dynamics, learning   semantically isolating divergent data, successfully mitigating
+  robustness under statistical heterogeneity, resource efficiency   the high-frequency jitter prevalent in standard DRL baselines.
+  and scalability, utility weight sensitivity, and a detailed abla-
+  tion study of the core algorithmic components.                 B. Learning Performance and Robustness to Heterogeneity
+
+                                                                    Test accuracy on held-out data is a key metric for evaluating
+  A. Convergence and Optimization Dynamics                                                                  federated learning systems in heterogeneous environments.
+   The primary objective of the proposed framework  is to  The evolution of test accuracy on the Fashion-MNIST and
+ maximize system utility while strictly adhering to delay con-  CIFAR-10 datasets is shown in Fig. 5. FSTPO is the sole
+  straints. The expected utility convergence and the instanta-   algorithm that consistently satisfies the target accuracy limits,
+  neous delay violation costs, alongside the Lagrange multi-  namely Acctarget = 85.0% and 75.0% respectively, within
+  plier dynamics, are presented in Fig. 3. FSTPO consistently  100 communication rounds. On the CIFAR-10 dataset, the
+  achieves the highest utility plateau, demonstrating relative util-   performance gain becomes particularly pronounced, yielding
+  ity improvements of 24.26%, 16.37%, 63.14%, and 125.21%   relative accuracy improvements of up to 40.36% over the
+  over MADDPG, PPO, Greedy, and FedAvg, respectively. This   baselines. By encoding data heterogeneity via the semantic
+  gain stems from the Gumbel–Softmax and Beta distribution   graph channel into Eku, FSTPO  filters devices with severe
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 10 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+  10
+
+
+
+
+
+                                                                                                                                                                     350                                                            9             350                                                            9
+        90                                            Acctarget =85%                   80                                            Acctarget =75%                                                                                       8                                                                            8
+        80                                                                  70                                                                              300                                                            7             300                                                            7
+    (%) 70                                                          (%) 60                                                                              250                                                            6             250                                                            6
+        60
+                                                                                                                                                                     200                                                            5             200                                                            5           Accuracy                                                                                                                                                                                    Accuracy 50
+                                                                                                                                                                                                                                                                                                            Energy 150                                                            4Delay           Energy 150                                                            4Delay      Test 50                                                                             Test 40
+        Global 40                                                                                                                    Global 30                                      FSTPOPPO                      100                                                            3             100                                                            3
+        30                                                                               MADDPG                                                                                2                                                                            2
+                                                                                                                              Greedy                                                                                                                                                                      50                                                                                                                                                                                                                                                   50        20                                                                  20                                                                                                                                                                                                                                    1                                                                                                                                                                                                                                                                                                                 1                                                                                                                      FedAvg
+                                                                                                              Random
+                                                                                                                                                                       0                                                                                                                                                                                                                                    0               0                                                                                                                                                                                                                                                                                                                 0        10                                                                             10
+                                                                                                                                                FSTPO   PPO  MADDPG  Greedy   FedAvg  Random                                                                                                                                                                                                                FSTPO   PPO  MADDPG  Greedy   FedAvg  Random           0         20         40         60         80        100                                                                               0         20         40         60         80        100
+                      Communication Rounds k                                    Communication Rounds k                                                              (a) Fashion-MNIST                                                                 (b) CIFAR-10
+                           (a) Fashion-MNIST (Non-IID)                                            (b) CIFAR-10 (Non-IID)
+                                                                     Fig. 7: Average per-round energy consumption and task la-
+        Fig. 5: Global test accuracy on Non-IID datasets.
+                                                               tency per communication round.
+
+
+                         FSTPO        PPO       MADDPG          Greedy         FedAvg        Random
+                                                                                                                                            FSTPO        PPO       MADDPG          Greedy         FedAvg        Random
+
+                                                                                   80                                                                          140                                                                       140
+         90
+
+
+                                                                                   70
+                                                                                                                                                                120                                                                       120
+         80
+    (%)                                                                  (%) 60
+            Accuracy 70                                                                                                                                                                          Accuracy 50                                                                                                                                                        Utility 100                                                                                                                                                  Utility 100
+      Test                                                                                        Test                                                                              80                                                                        80
+         60                                                                        40                                                                                                                                  System                                                                                                                                    System
+
+                                                                                                                                                                 60                                                                        60
+                                                                                   30
+         50
+
+                                                                                   20                                                                           40                                                                        40
+                0.1           0.3           0.5           0.7                  1.0                      0.1           0.3           0.5           0.7                  1.0
+                    Data Heterogeneity Level   (Dirichlet)                                 Data Heterogeneity Level   (Dirichlet)
+                              (a) Fashion-MNIST (Non-IID)                                                   (b) CIFAR-10 (Non-IID)                                20                                                                        20
+                                                                                                                        M=10    M=20    M=30    M=40    M=50                 M=10    M=20    M=30    M=40    M=50
+    Fig. 6: Test accuracy under varying data heterogeneity α.                                       (a) Fashion-MNIST (Non-IID)                                                   (b) CIFAR-10 (Non-IID)
+                                                                     Fig. 8: System utility versus the number of scheduled devices.
+
+  distribution skews, yielding superior accuracy and consistently
+  narrow variance across rounds.                                                      The framework’s scalability is validated in Fig. 8, which
+   To stress test the system’s structural capacity against data                                                                      plots system utility as the active device pool expands from
+  skewness, performance under varying degrees of  statistical                                                      10 to 50. FSTPO not only maintains the highest utility but
+  heterogeneity, parameterized by the Dirichlet concentration                                                                   also exhibits proportional growth, indicating highly efficient
+  parameter α,  is evaluated  in Fig.  6. In extreme Non-IID                                                                          utilization of supplemental computing and communication
+  regimes, such as when α = 0.1, the channel-heuristic Greedy                                                                   resources. In contrast, standard PPO and MADDPG experience
+  policy  suffers a catastrophic accuracy collapse due  to  its                                                                 severe growth stagnation and policy collapse under high-load
+ myopic prioritization of physical channel states over local data                                                                    conditions, particularly on the CIFAR-10 dataset, evidenced
+  quality. Standard DRL and FedAvg similarly fail to maintain                                                      by significantly widened error bars.
+  convergence. In contrast, FSTPO’s graph-structured encoding
+                                                                           Finally, the system resilience under physical channel im-
+  captures implicit divergence signals, balancing resource con-
+                                                              pairments is evaluated by varying the decoding SNR threshold
+  straints with data coverage and maintaining accuracy across
+                                                        Γmin in Fig. 9. As Γmin increases, communication conditions
+  all heterogeneity levels.
+                                                    become more demanding, and the success probability of all
+                                                        schemes declines accordingly. The degradation is especially
+  C. Resource Efficiency and System Scalability                  evident for DRL-based baselines such as PPO and MAD-
+    Practical deployment requires a delicate balance among  DPG, whose performance drops rapidly in the high-threshold
+  communication  reliability, energy consumption, and system   regime, suggesting that without explicit reliability constraint
+  scalability. The average energy consumption and task latency   awareness, the learned policies allocate resources unsuitably
+  across different workloads are compared in Fig. 7. FSTPO   for harsh channel conditions. The Greedy strategy maintains
+  establishes a superior Pareto-like balance, maintaining the   a high success  rate by significantly reducing participating
+  lowest energy consumption among  all compared schemes,   devices, indicating a conservative scheduling pattern that limits
+  with per-round reductions of approximately 19.3% and 34.7%   system coverage. In contrast, FSTPO exhibits a more balanced
+  relative  to PPO and Greedy,  respectively,  in the CIFAR-   response: the success probability remains above the reliability
+ 10 scenario. While the Greedy approach minimizes latency,   requirement even under severe fading, while a relatively larger
+   it incurs an excessively high energy penalty, illustrating a   set of active devices is preserved throughout, reflecting more
+  disproportionate trade-off. As task complexity increases, the   efficient use of system resources.
+  incremental overhead of FSTPO remains marginal compared    To further examine robustness beyond average performance,
+  to baselines like FedAvg and Random, which demonstrate   a statistical and sensitivity analysis is conducted under dy-
+  insufficient adaptability to dynamic environments.            namic network  conditions,  as  illustrated  in  Fig.  10. The
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 11 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                    11
+
+
+                      FSTPO     PPO    MADDPG       Greedy      FedAvg      Random             increasing trend with ω3, as larger latency weights incentivize
+        100                                                          higher CPU frequency allocations that reduce round duration
+                                                                           at the cost of greater power consumption, while accuracy
+                  Reliability Target Limit (  min =85.0%)                                   remains largely stable across both datasets. Importantly, the
+    (%)  80                                                            latency constraint T k ≤Tmax = 5 s is satisfied across all
+  km,u
+                                                            weight configurations, confirming that the Lagrange multiplier
+                                                      mechanism enforces hard constraints independently of the
+         60             Probability                                                                           utility coefficient  selection. These  results demonstrate  that
+                                                                               Severe                                                                              Channel
+                                  Active Scheduled Devices   skm,u                                                                           Fading                      40         Success              35                                                           Regime       FSTPO is robust to moderate variations in (ω2, ω3) and that
+                                                                   the  baseline  coefficient  setting  represents a well-balanced         40         30
+                      25                                                     operating point within the feasible Pareto region.
+                      20
+
+                      15                Communication
+         20         10 ConservativeCatastrophicPruning
+                       5
+                                                               E. Ablation Study                       0 2       4       6       8      10      12      14
+
+          0             2              4              6              8              10             12             14      To evaluate the contribution of each component in the pro-
+                                       Decoding SNR Threshold  min                    posed architecture, an ablation study is conducted with three
+                                                           degraded variants: w/o SemGraph, which removes semantic-  Fig. 9: System performance versus SNR decoding thresholds
+  Γmin.                                                   aware modelling; w/o TFPS, which disables policy sharing
+                                                                 across agents; and w/o ContRelax, which replaces continu-
+                                                           ous action relaxation with direct discretization. As shown in
+  cumulative distribution functions of task latency and energy   Fig. 12, the full FSTPO framework maintains a smooth and
+  consumption in Fig. 10(a) and (b) show that FSTPO yields   stable convergence trend on both Fashion-MNIST and CIFAR-
+  a tightly concentrated latency distribution, where  all tasks   10, reaching a higher accuracy level with relatively small
+  are completed within Tmax = 5 s. In comparison, PPO and   fluctuations.
+ MADDPG exhibit evident long-tail behaviours, indicating fre-    The w/o TFPS variant shows a slower rate of increase in
+  quent delay violations. The Greedy strategy achieves relatively   accuracy and lower final performance. The gap becomes more
+ low latency  at the expense of substantially higher energy   apparent as training proceeds, indicating that removing policy
+  consumption. FSTPO maintains low latency dispersion while   sharing weakens cooperation among distributed agents and
+  preserving energy efficiency, suggesting a more balanced op-   reduces the system’s ability to adapt to temporal variations.
+  erating regime. The impact of the gradient penalty coefficient  The w/o SemGraph variant shows an increasing trend with
+ λ on learning stability  is presented in Fig. 10(c). A small   multiple abrupt drops, especially on CIFAR-10, as hetero-
+ λ leads to noticeable oscillations during training, whereas   geneous updates are aggregated without divergence filtering,
+  an excessively large value restricts device participation and   causing intermittent model degradation. The w/o ContRelax
+  slows convergence. A moderate setting λ = 1.0 yields the   variant exhibits continuous oscillations during training. The
+  most stable training trajectory. The effect of the local iter-   accuracy curve fluctuates at a high frequency and fails to sta-
+  ation number I  is illustrated in Fig. 10(d). As I increases,   bilize, remaining at a comparatively lower level. This reflects
+  computational cost  rises steadily while system  utility  first   that direct discretization disrupts the smoothness of the action
+  improves then gradually declines, indicating the presence of a   space and introduces instability into the optimization process,
+  balanced operating region where moderate local computation   confirming the necessity of the Gumbel–Softmax relaxation
+  achieves an effective trade-off between learning performance   for effective hybrid action learning.
+  and resource consumption.
+
+                                                                             VI. CONCLUSION
+  D. Utility Weight Sensitivity Analysis
+
+   To  evaluate  the robustness  of  the proposed framework     This paper proposed FSTPO, a federated spatio-temporal
+  to the choice of utility weighting coefficients, a sensitivity   policy optimization framework for UAV-assisted edge com-
+  analysis is conducted by independently varying ω2 and ω3   puting. By modeling the resource management problem as
+  around the baseline setting (ω1, ω2, ω3) =  (1, 0.1, 0.5), as   a constrained Markov game and incorporating dual-channel
+  illustrated in Fig. 11. When ω2 is reduced to 0.05, the policy   spatio-temporal state encoding with hybrid action learning,
+  assigns lower  priority to energy conservation, resulting in  FSTPO jointly optimizes device scheduling, bandwidth  al-
+  higher energy consumption but improved learning accuracy.   location, and CPU frequency control under Non-IID data
+  Conversely, increasing ω2  to 0.2 drives the policy toward   distributions. Simulation results show that FSTPO achieves
+ more aggressive energy reduction  at a moderate accuracy  24.26%–125.21% utility gains over baselines, satisfies latency
+  cost, yet both configurations continue to satisfy the target  and reliability constraints via primal–dual optimization, and
+  accuracy thresholds of 85.0% and 75.0% on Fashion-MNIST   maintains  stable convergence across varying heterogeneity
+  and CIFAR-10, respectively. When ω3 is varied between 0.1   levels. Future work will extend the framework to incorporate
+  and 1.0, the energy consumption exhibits a monotonically  UAV trajectory design and more realistic mobility models.
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 12 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+  12
+
+
+        1.0                                                           1.0                                                                                             Target (85%)                  250        EnergyFashion-MNIST                         140
+        0.8                                                           0.8                                            (%) 80                           Target (75%)                                CIFAR-10
+                                                                                                                                                                 200                                                                                                                                                                                                              120Utility        0.6                                                                              Constraint                             0.6                                                 60                                                                                                                                                                                                                                                                                Accuracy                                                   150   CDF                                                    CDF                                             Tmax                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      Consumption                                                                                                                                                                                                              100System                                          FSTPO
+        0.4                      =5s                                                                                                                                                                 100                                          PPO                                                                      0.4                                 FSTPOPPO            Test 40
+                                   MADDPG                                     MADDPG                                                                                                                                                                                                                                                                                                            Energy                                                                                                                                                                                                              80  Expected        0.2                                        Greedy                                                                      0.2                                        Greedy                                                                                                                                                                                                            Global                                                                                                                                                                  50
+                                                 FedAvg                                                                                                           FedAvg                                                                                                              20        CIFAR-10:  =1.0          Fashion-MNIST:  =1.0
+                                             Random                                                 Random                         CIFAR-10:  =0.1          Fashion-MNIST:  =0.1
+        0.0                                                           0.0                                                                                                      0                                          60
+               2         4         6         8               100      150      200      250      300             0      20      40      60      80     100           I=3      I=5      I=7      I=9
+                     Task Latency (s)                                Total Energy Consumption                       Communication Rounds k                             Local Iterations I
+                      (a) CDF of Task Latency                              (b) CDF of System Energy                            (c) Impact of Gradient Penalty                      (d) Trade-off under Computation Load
+
+                                      Fig. 10: Statistical performance and sensitivity analysis.
+
+
+
+                                                   Global Test Accuracy            Total Energy Consumption                           Computing,” in IEEE Transactions on Services Computing, vol. 18, no.
+                                                                                   78                                              1, pp. 440-452, Jan.-Feb. 2025.
+           87                                                       200                                                                                       [8]  J. Zhang, H. Luo, X. Chen, H. Shen and L. Guo, ”Minimizing Response
+       (%)                                                                           (%) 75                                                       240           84                                                       150                                           Delay in UAV-Assisted Mobile Edge Computing by Joint UAV De-                 Accuracy                                                                                                                                                                                                                 Consumption              Accuracy 72                                                       160Consumption        ployment and Computation Offloading,” in IEEE Transactions on Cloud
+         Test 81                                                       100Energy       Test                                                                                                                  Energy        Computing, vol. 12, no. 4, pp. 1372-1386, Oct.-Dec. 2024.
+                                                                                       [9]  P. Wang et al., ”Decentralized Navigation With Heterogeneous Federated             Global 78                                                       50 Total           Global 69                                                                                                                                            80 Total
+                                                                              Reinforcement Learning for UAV-Enabled Mobile Edge Computing,” in
+                                                                                   66
+           75  Low   2     High   2     Baseline    Low   3     High   3  0                Low   2     High   2     Baseline    Low   3     High   3  0         IEEE Transactions on Mobile Computing, vol. 23, no. 12, pp. 13621-
+                    (0.05)         (0.2)       (0.1, 0.5)       (0.1)         (1.0)                              (0.05)         (0.2)       (0.1, 0.5)       (0.1)         (1.0)             13638, Dec. 2024.
+                      (a) Fashion-MNIST Parameter Sensitivity                                    (b) CIFAR-10 Parameter Sensitivity              [10]  P. Sun et al., ”AoI-Aware Inter-UAV Cooperative Federated Computing
+                                                                                            in Mobile Edge Computing-Enabled Air-Terrestrial Integrated Networks,”
+  Fig. 11: Sensitivity analysis of utility weighting coefficients                                                                                            in IEEE Internet of Things Journal, vol. 13, no. 1, pp. 935-950, Jan. 2026.
+ ω2 and ω3.                                                                  [11] B. Chang, W. Tang, X. Yan, X. Tong and  Z. Chen,  ”Integrated
+                                                                               Scheduling of Sensing, Communication, and Control for mmWave/THz
+                                                                         Communications in Cellular Connected UAV Networks,” in IEEE Journal
+           90                                                                  80                                  on Selected Areas in Communications, vol. 40, no. 7, pp. 2103-2113, July.
+           80                                                                  70                                      2022.
+                                                                                 [12] H. Guo, Y. Wang, J. Liu and C. Liu, ”Multi-UAV Cooperative Task      (%) 70                                                          (%) 60
+                                                                                   Offloading and Resource Allocation in 5G Advanced and Beyond,” in
+           60                 Accuracy                                                                                                                                                                 Accuracy 50                                IEEE Transactions on Wireless Communications, vol. 23, no. 1, pp. 347-
+        Test 50                                                                             Test 40                                       359, Jan. 2024.
+                                                                                 [13]                                                                           X. Huang,                                                                                                 Y.                                                                                           Zhang, Y.                                                                                                                 Qi, C.                                                                                              Huang and                                                                                                 M.                                                                                                                                            S. Hossain,                                                                                                                                        ”Energy-            Global 40                                                                                                                                           Global 30                                                                                              Efficient                                                            UAV                                                                                             Scheduling                                                                                                 and                                                                                                                             Probabilistic                                                                                                                    Task                                                                                                                                   Offloading                                                                                                                                                             for                                                                                                                                                              Digital           30
+                                                                                                            FSTPO
+           20                                                                  20                                             w/ow/oSemGraphTFPS           Twin-Empowered Consumer Electronics Industry,” in IEEE Transactions
+                                                                                                                                  w/o ContRelax          on Consumer Electronics, vol. 70, no. 1, pp. 2145-2154, Feb. 2024.
+           10                                                                  10
+             0         20         40         60         80        100            0         20         40         60         80        100      [14]  J. Feng, X. Huang, L. Liu, M. Yang, Q. Pei and Y. G. Shee, ”Resource
+                        Communication                                     Rounds                                                 k                                    Communication                                                                                            Rounds k                   Allocation for Task-Oriented Generative Artificial Intelligence in Internet                              (a)                        Fashion-MNIST                                              (Ablation)                                                                                                        (b) CIFAR-10 (Ablation)
+                                                                                      of Things,” in IEEE Internet of Things Journal, vol. 12, no. 10, pp. 13233-
+       Fig. 12: Ablation study of the proposed framework.            13247, May. 2025.
+                                                                                 [15]  J. Zhou, X. Hou, Y. Zeng, P. Cong, W. Jiang and S. Guo, ”Quality
+                                                                                      of Experience and Reliability-Aware Task Offloading and Scheduling for
+                                                                                Multi-User Mobile-Edge Computing Systems,” in IEEE Transactions on
+                   REFERENCES                                     Services Computing, vol. 18, no. 3, pp. 1683-1696, May.-June. 2025.
+                                                                                 [16]  J. Tian, D. Wang, H. Zhang and D. Wu, ”Service Satisfaction-Oriented  [1] Q. He et al., ”Integrating IoT and 6G: Applications of Edge Intelligence,
+                                                                             Task Offloading and UAV Scheduling in UAV-Enabled MEC Networks,”      Challenges, and Future Directions,” in IEEE Transactions on Services
+                                                                                            in IEEE Transactions on Wireless Communications, vol. 22, no. 12, pp.      Computing, vol. 18, no. 4, pp. 2471-2488, July-Aug. 2025.
+                                                                              8949-8964, Dec. 2023.  [2] X. Li, H. Li, C. Sun, Q. Fan, Z. Han and V. C. M. Leung, ”Edge-Enhanced
+                                                                                 [17] Y. Wang,  J. Zhu, H. Huang and F. Xiao, ”Bi-Objective Ant Colony       Intelligence: A Comprehensive Survey of Large Language Models and
+                                                                                 Optimization  for  Trajectory Planning and Task Offloading  in UAV-      Edge-Cloud Computing Synergy,” in IEEE Communications Surveys and
+                                                                                    Assisted MEC Systems,” in IEEE Transactions on Mobile Computing,       Tutorials, vol. 28, pp. 1248-1284, 2026.
+                                                                                               vol. 23, no. 12, pp. 12360-12377, Dec. 2024.  [3]  S. Wang, M. Chen, C. G. Brinton, C. Yin, W. Saad and  S. Cui,
+      ”Performance Optimization for Variable Bitwidth Federated Learning in    [18] Y. Zhao et al., ”Joint Content Caching, Service Placement, and Task
+      Wireless Networks,” in IEEE Transactions on Wireless Communications,        Offloading in UAV-Enabled Mobile Edge Computing Networks,” in IEEE
+       vol. 23, no. 3, pp. 2340-2356, March. 2024.                                   Journal on Selected Areas in Communications, vol. 43, no. 1, pp. 51-63,
+  [4] Y. Zhou et al., ”E-3SFC: Communication-Efficient Federated Learning        Jan. 2025.
+      With Double-Way  Features  Synthesizing,”  in IEEE  Transactions on    [19]  T. Zhang, K. -Y. Lam, J. Zhao and J. Feng, ”Joint Device Scheduling and
+      Neural Networks and Learning Systems, vol. 36, no. 8, pp. 14922-14936,       Bandwidth Allocation for Federated Learning Over Wireless Networks,”
+     Aug. 2025.                                                                         in IEEE Transactions on Wireless Communications, vol. 24, no. 1, pp.
+  [5] X. Zhang, R. Jia, Q. Yin, Z. Zheng and M. Li, ”Asynchronous Task        3-18, Jan. 2025.
+      Scheduling and Resource Allocation  for UAV-Enabled Mobile Edge    [20]  J. Lee,  F. Solat, T. Y. Kim and H. V. Poor, ”Federated Learning-
+     Computing Networks,” in IEEE Transactions on Services Computing, vol.      Empowered Mobile Network Management for 5G and Beyond Networks:
+       19, no. 1, pp. 167-180, Jan.-Feb. 2026.                               From Access to Core,” in IEEE Communications Surveys and Tutorials,
+  [6] A. A. Al-Bakhrani, M. Li, M. S. Obaidat and G. A. Amran, ”MOALF-         vol. 26, no. 3, pp. 2176-2212, third quarter. 2024.
+     UAV-MEC: Adaptive Multiobjective Optimization for UAV-Assisted Mo-    [21]  S. Khan, A. Ali-Pour, M. Avgeris, J. Gascon-Samson and A. Leivadeas,
+       bile Edge Computing in Dynamic IoT Environments,” in IEEE Internet      ”FEDORA: Federated Ensemble Reinforcement Learning for DAG-Based
+       of Things Journal, vol. 12, no. 12, pp. 20736-20756, June, 2025.             Task Offloading and Resource Allocation in MEC,” in IEEE Internet of
+  [7] Z. Chen, Y. Yang,  J. Xu, Y. Chen and  J. Huang, ”Task Offloading       Things Journal, vol. 12, no. 21, pp. 44228-44242, Nov. 2025.
+      and Resource Pricing Based on Game Theory in UAV-Assisted Edge    [22] A. M. Alqahtani et al., ”Federated Learning-Based Adaptive Resource
+
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.
+
+===== PAGE 13 =====
+                          This article has been accepted for publication in IEEE Internet of Things Journal. This is the author's version which has not been fully edited and
+                                                   content may change prior to final publication. Citation information: DOI 10.1109/JIOT.2026.3727888
+
+                                                                                                                                                    13
+
+
+
+     Management for Sustainable 6G-IoT Ecosystems,” in IEEE Internet of                       Lichuan Ma  (Member, IEEE) received his B.S.
+      Things Journal, vol. 13, no. 1, pp. 1283-1298, Jan. 2026.                                         degrees in Information Security from the School of
+  [23]  T. Zhou,  J. Yu,  J. Zhang and D. H. K. Tsang, ”Federated Prompt-                          Mathematics, Shandong University, in 2012 and the
+      Based Decision Transformer for Resource Allocation of Customized VR                       Ph.D degree in information security from Xidian
+      Streaming in Mobile Edge Computing,” in IEEE Transactions on Wireless                              University, in 2018. His research interests focus on
+      Communications, vol. 25, pp. 743-757, 2026.                                                      privacy preserving techniques and data security in
+  [24] E. Seo and E. Elmroth, ”Pioneering Eco-Efficiency in Cloud Comput-                              distributed systems.
+       ing: The Carbon-Conscious Federated Reinforcement Learning (CCFRL)
+      Approach,” in IEEE Internet of Things Journal, vol. 12, no. 7, pp. 8958-
+      8979, April. 2025.
+  [25] W. Hou  et  al., ”Adaptive Training and Aggregation  for Federated
+      Learning in Multi-Tier Computing Networks,” in IEEE Transactions on
+      Mobile Computing, vol. 23, no. 5, pp. 4376-4388, May. 2024.
+  [26]  T. -H. Peng, C. -C. Yang, C. -H. Liu, C. -W. Huang, C. -H. Hsieh
+      and A. -C. Pang, ”FedFold: Efficient Federated Learning for Inconsis-                         Lei Liu (Member, IEEE) received the B.Eng. degree
+       tent Dual Resource Heterogeneity,” in IEEE Transactions on Cognitive                        from Zhengzhou University, Zhengzhou, China, in
+      Communications and Networking, vol. 12, pp. 6539-6550, 2026.                                 2010, and the M.Sc. and Ph.D. degrees from Xidian
+  [27] W. Fan, P. Chen, X. Chun and Y. Liu, ”MADRL-Based Model Parti-                              University, Xi’an, China, in 2013 and 2019, respec-
+       tioning, Aggregation Control, and Resource Allocation for Cloud-Edge-                                  tively, all in communication engineering. He is cur-
+      Device Collaborative Split Federated Learning,” in IEEE Transactions on                              rently a Lecturer with the Department of Electrical
+      Mobile Computing, vol. 24, no. 6, pp. 5324-5341, June. 2025.                                    Engineering and Computer Science, Xidian Univer-
+  [28] X. Qiang, Z. Chang, Y. Hu, L. Liu and T. H¨am¨al¨ainen, ”Adaptive and                                    sity. From 2013 to 2015, he was with a technology
+       Parallel Split Federated Learning in Vehicular Edge Computing,” in IEEE                         company. From 2018 to 2019, he was a visiting
+       Internet of Things Journal, vol. 12, no. 5, pp. 4591-4604, March. 2025.                          Ph.D. student with the University of Oslo, Oslo,
+  [29]  T. Kwantwi, G. Sun, N. A. E. Kuadey, G. T. Maale and G. Liu, ”Per-                        Norway. His research interests include vehicular ad
+      sonalized Federated Learning for Intelligent Slice-Based Task Offloading   hoc networks, intelligent transportation, mobile edge computing, and the
+      and Slice Resource Allocation in Sliced B5G MEC-Enabled Network,”    Internet of Things.
+       in IEEE Internet of Things Journal, vol. 12, no. 23, pp. 49992-50011,
+      Dec. 2025.
+  [30]  J. Tang, J. Nie, Y. Zhang, Z. Xiong, W. Jiang and M. Guizani, ”Multi-
+      UAV-Assisted Federated Learning for Energy-Aware Distributed Edge
+       Training,” in IEEE Transactions on Network and Service Management,                        Qingqi Pei (Senior Member, IEEE) received the
+       vol. 21, no. 1, pp. 280-294, Feb. 2024.                                                                 B.S., M.S., and Ph.D. degrees in computer science
+  [31] C. Li, K. Jiang, G. He, F. Bing and Y. Luo, ”A Computation Offloading                         and cryptography from Xidian University, Xi’an,
+     Method for Multi-UAVs Assisted MEC Based on Improved Federated                           China, in 1998, 2005, and 2008, respectively. He
+    DDPG Algorithm,” in IEEE Transactions on Industrial Informatics, vol.                                   is currently a Professor and Member with the State
+       20, no. 12, pp. 14062-14071, Dec. 2024.                                              Key Laboratory of Integrated Services Networks,
+  [32] R. Karmakar, G. Kaddoum and O. Akhrif, ”A Novel Federated Learning-                          Xidian University, where he  is also the Director
+      Based Smart Power and 3D Trajectory Control for Fairness Optimization                            of the Shaanxi Key Laboratory of Blockchain and
+       in Secure UAV-Assisted MEC Services,” in IEEE Transactions on Mobile                          Secure Computing. His research interests include
+      Computing, vol. 23, no. 5, pp. 4832-4848, May. 2024.                                                    digital contents protection and wireless networks and
+  [33]  J. Wu, Z. Yu,  J. Guo, Z. Tang, T. Wang and W.  Jia, ”Two-Stage                                security. Dr. Pei is a Professional Member of the
+     Deep Energy Optimization in IRS-Assisted UAV-Based Edge Computing   Association for Computing Machinery. He is a Senior Member of the Chinese
+      Systems,” in IEEE Transactions on Mobile Computing, vol. 24, no. 1,    Institute of Electronics and the China Computer Federation.
+       pp. 449-465, Jan. 2025.
+
+
+
+
+                                                                                       Celimuge Wu  (Senior Member, IEEE) ) received
+                                                                                                                  his Ph.D. degree from the University of Electro-
+                       Xiaoteng Yang   (Graduate Student)  is currently                                                                                              Communications, Japan. He is currently a Professor
+                          pursuing the Ph.D. degree in communication and                                                                                            and the Director of the MetaNetworking Research
+                          information systems with Xidian University, Xi’an,                                                                                                    Center at the same university. His research interests
+                          China. His current research interests include edge                                                                                                         include vehicular networks, edge computing, IoT,
+                         computing, resource assignment, satellite networks                                                                                            and AI-driven wireless networking and computing.
+                       and stochastic network optimization.                                                                            He serves as an Associate Editor for the IEEE Trans-
+                                                                                                             actions on Cognitive Communications and Network-
+                                                                                                                    ing, the IEEE Transactions on Network Science and
+                                                                                                       Engineering, and the IEEE Transactions on Green
+                                                                     Communications and Networking. He is the Vice Chair (Asia-Pacific) of the
+                                                               IEEE Technical Committee on Big Data (TCBD). He is a recipient of the
+                                                                    2021 IEEE Communications Society Outstanding Paper Award, the 2021 IEEE
+                                                                                       Internet of Things Journal Best Paper Award, the IEEE Computer Society 2020
+                                                                            Best Paper Award, and the IEEE Computer Society 2019 Best Paper Award
+                            Jie Feng   (Member, IEEE) received her Ph.D.   Runner-Up. He is also an IEEE Vehicular Technology Society Distinguished
+                         degree in communication and information systems    Lecturer.
+                       from Xidian  University, China,  in 2020. She  is
+                            currently an Associate Professor at the Department
+                           of  Electrical Engineering and Computer Science
+                               at Xidian University, Xian, China. From 2018 to
+                         2019, she was with Carleton University, Ottawa,
+                    ON, Canada, as a visiting Ph.D. student. Her current
+                           research interests include mobile-edge computing,
+                           blockchain, deep reinforcement learning, the device
+                             to device communication, resource assignment, and
+  convex optimization, and stochastic network optimization.
+
+
+Authorized licensed use limited to: Hanoi University of Science & Technology. Downloaded on September 19,2026 at 07:48:25 UTC from IEEE Xplore. Restrictions apply.
+                 © 2026 IEEE. All rights reserved, including rights for text and data mining and training of artificial intelligence and similar technologies. Personal use is permitted,
+                                             but republication/redistribution requires IEEE permission. See https://www.ieee.org/publications/rights/index.html for more information.

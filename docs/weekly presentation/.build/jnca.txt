@@ -1,0 +1,984 @@
+Information-Aware Multiobjective Evolutionary Optimization with
+Multi-Fidelity Evaluation for UAV-Assisted Federated Learning
+Research Working Drafta
+aSchool of Information and Communications Technology, Hanoi University of Science and Technology, Hanoi, Vietnam
+A R T I C L E I N F O
+Keywords:
+UAV-assisted federated learning
+Client selection
+Multiobjective optimization
+Multi-fidelity evaluation
+Evolutionary algorithms
+Partial observation
+A B S T R A C T
+This working document develops a UAV-assisted federated learning problem in which client
+selection must account for complementary data, heterogeneous communication resources, and
+incomplete information. Ground devices train locally, UAVs relay and aggregate updates, and
+a coordinator selects participating devices and allocates bandwidth and computation resources.
+Three objectives are considered: minimize population validation loss, total operational energy,
+and elapsed training time. The document separates a reference simulator benchmark from an
+implementable controller that only observes historical reports and explicitly acquired information.
+Three algorithmic directions are specified: (A) set-aware multiobjective evolutionary scheduling,
+(B) multi-fidelity evolutionary optimization with cost-aware evaluation and a verified Pareto
+archive, and (C) optional adaptive probing with two-stage online recourse. Mathematical
+assumptions, numerical examples, encodings, pseudocode, experimental controls, student
+work packages, and verification exercises are provided. Evaluation fidelity is an optimization
+mechanism; physical probing is a network action with its own cost. Proposed contributions and
+hypotheses require empirical validation and further novelty assessment before journal submission.
+1. System model and motivating learning scenario
+1.1. Research question and scope
+Consider geographically distributed sensors or cameras supported by UAV-mounted edge servers. Most clients
+observe common conditions, while a few observe rare but important events. Good wireless channels do not necessarily
+identify useful training data. Conversely, a large deviation from the average gradient can indicate useful minority
+information or corrupted observations. The main research question is:
+How can a scheduler select complementary clients and allocate wireless resources when evaluating candidate
+schedules is expensive and current client information is only partially available?
+The physical problem, learning objective, and optimization algorithm must remain distinct. A cheap proxy can guide
+search but must not silently replace the population-level learning objective.
+The initial model uses prescribed UAV movement, orthogonal spectrum pools, synchronous FL, fixed local SGD steps
+and minibatch size, fixed uplink transmit power, and stationary datasets. Independent application offloading, optimized
+flight trajectories, personalized models, and concept drift are extensions. Direction A establishes a reference-evaluated
+scheduler; Direction B addresses search cost; Direction C introduces adaptive information acquisition. Students should
+implement these layers sequentially.
+1.2. Network, clocks, and observable information
+Let = {1, … , 𝑀} be the clients and = {1, … , 𝑈} the UAVs. A coordinator aggregates UAV outputs. Round
+𝑘∈{0, … , 𝐾−1} starts with global model 𝑤𝑘∈ℝ𝑑at physical time 𝜏𝑘. Positions are 𝑞𝑢(𝜏𝑘) ∈ℝ3 and 𝑝𝑚(𝜏𝑘) ∈ℝ3.
+The clock follows
+𝜏𝑘+1 = 𝜏𝑘+ 𝑇𝑘,
+(1)
+where 𝑇𝑘includes decision-making and service time. Prescribed motion is indexed by physical time, not by the
+algorithm’s FL round number.
+A first simulator freezes each channel within a round. This is a block-channel approximation; its suitability must be
+checked against round duration and mobility. An extension updates channels within a round. The controller observes
+ORCID(s):
+Research working draft: Preprint submitted to Elsevier
+Page 1 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Table 1
+Core notation and units.
+Symbol
+Meaning
+Unit
+𝑤𝑘, Δ𝑘
+𝑚
+Global parameters and client model increment
+model-dependent
+𝑝𝑚
+Fixed client weight in the target population
+dimensionless
+𝑠𝑘
+𝑚,𝑢, 𝑧𝑘
+𝑚,𝑢
+Training and probing associations
+binary
+𝑏𝑟,𝑘
+𝑚,𝑢, 𝑓𝑟,𝑘
+𝑚
+Bandwidth and device CPU frequency
+Hz, cycles/s
+𝐶𝑟,𝑘
+𝑚, 𝐿𝑟
+𝑚
+CPU work and upload payload, 𝑟∈{𝑃, 𝑇}
+cycles, bits
+𝑃𝑚, 𝑁0, ℎ𝑘
+𝑚,𝑢
+Uplink power, noise PSD, channel gain
+W, W/Hz, dimensionless
+𝐸𝑘, 𝑇𝑘
+Executed energy and duration per round
+J, s
+𝑘, 𝑎𝑘
+𝑚
+Available history and information age
+history, ŝ
+𝐣𝓁(𝑥), 𝑐𝓁(𝑥)
+Fidelity estimate and evaluation cost
+vector, GPU-s or s
+measured links, hardware limits, batteries, and authorized learning reports. It does not automatically observe all current
+gradients or labels. Hidden simulator fields are restricted to explicitly identified oracle evaluations.
+1.3. A small motivating scenario
+Start with two UAVs and six clients. Four clients observe common classes, one observes a rare class, and one has
+noisy labels. The rare-class client has a weak link. Choosing only nearby clients can neglect the rare class; choosing
+all unusual gradients can favor noise. A useful method must assess client sets and their resource cost together. The
+six-client setting supports restricted enumeration and should be understood before increasing scale.
+Available history
+Links, reports, batteries
+Optional probing
+Pay to refresh information
+Evolutionary search
+Client sets and resources
+Multi-fidelity evaluation
+Predict, refine, verify
+Execute one schedule
+Local SGD and uploads
+Aggregate and update
+Model, costs, reports
+candidates
+estimates
+Figure 1: Conceptual controller. Physical probing changes the available information and consumes operational resources.
+Multi-fidelity evaluation guides search; simulated candidate trials are not free physical FL rounds.
+2. Federated learning, complementary data, and uncertainty
+2.1. Population objective and local training
+Client 𝑚holds training set 𝑚with 𝑛𝑚samples. Define
+𝐹𝑚(𝑤) = 1
+𝑛𝑚
+∑
+𝜉∈𝑚
+𝓁(𝑤; 𝜉),
+𝐹pop(𝑤) =
+𝑀
+∑
+𝑚=1
+𝑝𝑚𝐹𝑚(𝑤),
+𝑝𝑚> 0,
+∑
+𝑚
+𝑝𝑚= 1.
+(2)
+Sample weighting uses 𝑝𝑚= 𝑛𝑚∕∑
+𝑗𝑛𝑗; device balancing uses 𝑝𝑚= 1∕𝑀. Region-based weights are possible if
+defined by the application in advance. The target weights must not change just because a scheduler excludes difficult
+clients.
+Research working draft: Preprint submitted to Elsevier
+Page 2 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Let 𝑚be held-out validation data. The optimization target is
+𝐿val(𝑤) =
+∑
+𝑚
+𝑝𝑚
+1
+|𝑚|
+∑
+𝜉∈𝑚
+𝓁(𝑤; 𝜉).
+(3)
+Training, validation, and final test data are disjoint. Equation (3) does not assume that a real coordinator holds all
+validation records. A simulator can evaluate it centrally; deployment requires an authorized evaluation service or
+distributed validation with explicitly charged overhead.
+Selected client 𝑚performs
+𝑤𝑘
+𝑚,0 = 𝑤𝑘,
+(4)
+𝑤𝑘
+𝑚,𝑖+1 = 𝑤𝑘
+𝑚,𝑖−𝜂𝑘̂∇𝐹𝑚(𝑤𝑘
+𝑚,𝑖),
+𝑖= 0, … , 𝐼−1,
+(5)
+Δ𝑘
+𝑚= 𝑤𝑘
+𝑚,𝐼−𝑤𝑘.
+(6)
+Fix local optimizer settings across methods. CPU work 𝐶𝑇,𝑘
+𝑚
+should be profiled for the model and hardware; if local
+epochs rather than steps are fixed, it also scales with dataset size.
+For selected set 𝑘,
+𝑤𝑘+1 = 𝑤𝑘+
+∑
+𝑚∈𝑘
+𝛼𝑘
+𝑚Δ𝑘
+𝑚,
+𝛼𝑘
+𝑚=
+𝑝𝑚
+∑
+𝑗∈𝑘𝑝𝑗
+.
+(7)
+For UAV 𝑢, let 𝑢,𝑘be its selected clients and 𝑃𝑢,𝑘= ∑
+𝑚∈𝑢,𝑘𝑝𝑚. Its aggregated increment is
+Δ𝑘
+𝑢=
+∑
+𝑚∈𝑢,𝑘
+𝑝𝑚
+𝑃𝑢,𝑘
+Δ𝑘
+𝑚.
+(8)
+The coordinator weights this by 𝑃𝑢,𝑘∕∑
+𝑣𝑃𝑣,𝑘. Empty UAV groups are omitted. This exactly reproduces (7); equal
+averaging over UAVs generally does not.
+Deterministic selection with selected-set normalization is not automatically an unbiased full-population update.
+Keep this aggregation rule fixed initially. With upload failures, aggregate successful clients only; if none succeed, retain
+𝑤𝑘+1 = 𝑤𝑘and charge all attempted work.
+2.2. Why client value is set-dependent
+At a common model 𝑤, write 𝑔𝑚= ∇𝐹𝑚(𝑤) and̄ 𝑔= ∑
+𝑚𝑝𝑚𝑔𝑚. A diagnostic representativeness measure is
+𝐷(𝑆) =
+‖‖‖‖‖
+∑
+𝑚∈𝑆
+𝛼𝑚(𝑆)𝑔𝑚−̄ 𝑔
+‖‖‖‖‖
+2
+.
+(9)
+For a set utility estimatê 𝑉, the marginal value is
+Δ𝑉(𝑚∣𝑆) =̂ 𝑉(𝑆∪{𝑚}) −̂ 𝑉(𝑆).
+(10)
+It can be negative and need not be submodular. Neither gradient novelty nor gradient similarity alone establishes
+usefulness.
+Example 1: a useful minority direction. Nine equal-weight clients have gradient 0 and one has gradient −2. The
+population gradient is −0.2. Selecting the zero-gradient clients because they are closest to the population gradient gives
+no first-order update. This illustrates a limitation of interpreting similarity as usefulness; it is not an empirical claim
+about any particular published method.
+Example 2: complementary clients. With equal weights and scalar gradients (2, −2, 1),̄ 𝑔= 1∕3. The pairs {1, 2},
+{1, 3}, and {2, 3} produce gradients 0, 1.5, and −0.5. Their squared matching errors are 1∕9, 49∕36, and 25∕36. The
+most representative pair contains very different individual gradients. Matching remains a proxy: multiple local SGD
+steps and final validation loss can behave differently.
+Research working draft: Preprint submitted to Elsevier
+Page 3 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+2.3. History, stale information, and probing
+Let 𝑘collect all permitted observations before round 𝑘. Store each client’s last report, timestamp, model version,
+and sample count. Define
+𝑎𝑘
+𝑚= 𝜏𝑘−𝑡last
+𝑚.
+(11)
+Even stationary data yield stale gradients when the global model changes. Record both information age and model
+change, for example ‖𝑤𝑘−𝑤last
+𝑚‖.
+A probe obtains minibatch loss and a gradient sketch:
+𝑦𝑘
+𝑚=
+(̂
+𝐹𝑚(𝑤𝑘), 𝑅̂∇𝐹𝑚(𝑤𝑘)
+)
++ 𝜀𝑘
+𝑚,
+𝑅∈ℝ𝑑𝑠×𝑑,
+𝑑𝑠≪𝑑.
+(12)
+The projection seed is shared so sketches are comparable. Noise represents sampling or measurement variation, not a
+formal differential-privacy guarantee. Computing the probe may require downloading the current model, which must be
+accounted for.
+Maintain a belief or predictive distribution 𝐵−
+𝑘over hidden client statistics:
+𝐵+
+𝑘= Update(𝐵−
+𝑘, 𝑦𝑘
+𝑘).
+(13)
+An ensemble predictor is a practical option. Calibrate its uncertainty on held-out reports; arbitrary ensemble spread
+must not be described as a proven posterior variance. Unknown clients need a prior and an exploration opportunity, not
+a falsely precise zero contribution.
+3. Communication, computation, and resource accounting
+3.1. Decision variables and feasibility
+Let 𝑧𝑘
+𝑚,𝑢indicate probing through UAV 𝑢and 𝑠𝑘
+𝑚,𝑢indicate training/uploading through it. Require
+𝑧𝑘
+𝑚,𝑢, 𝑠𝑘
+𝑚,𝑢∈{0, 1},
+∑
+𝑢
+𝑧𝑘
+𝑚,𝑢≤1,
+∑
+𝑢
+𝑠𝑘
+𝑚,𝑢≤1.
+(14)
+Training without a fresh probe is allowed. Thus 𝑠𝑘
+𝑚≤𝑧𝑘
+𝑚is not imposed. Define 𝑣𝑃,𝑘
+𝑚,𝑢= 𝑧𝑘
+𝑚,𝑢, 𝑣𝑇,𝑘
+𝑚,𝑢= 𝑠𝑘
+𝑚,𝑢, and
+𝑣𝑟,𝑘
+𝑚= ∑
+𝑢𝑣𝑟,𝑘
+𝑚,𝑢. For phases 𝑟∈{𝑃, 𝑇},
+0 ≤𝑏𝑟,𝑘
+𝑚,𝑢≤𝐵𝑢𝑣𝑟,𝑘
+𝑚,𝑢,
+∑
+𝑚
+𝑏𝑟,𝑘
+𝑚,𝑢≤𝐵𝑢,
+(15)
+𝑓min
+𝑚
+𝑣𝑟,𝑘
+𝑚≤𝑓𝑟,𝑘
+𝑚
+≤𝑓max
+𝑚
+𝑣𝑟,𝑘
+𝑚.
+(16)
+A measured mask 𝑒𝑘
+𝑚,𝑢enforces availability via 𝑣𝑟,𝑘
+𝑚,𝑢≤𝑒𝑘
+𝑚,𝑢. Rate and latency expressions apply only to active links with
+positive bandwidth; zero-bandwidth active schedules are infeasible.
+3.2. Uplink and payload
+With fixed transmit power and orthogonal spectrum pools,
+𝑅𝑟,𝑘
+𝑚,𝑢= 𝑏𝑟,𝑘
+𝑚,𝑢log2
+(
+1 +
+𝑃𝑚ℎ𝑘
+𝑚,𝑢
+𝑁0𝑏𝑟,𝑘
+𝑚,𝑢
+)
+.
+(17)
+The base propagation option is ℎ𝑘
+𝑚,𝑢= 𝛽0∕‖𝑞𝑢(𝜏𝑘) −𝑝𝑚(𝜏𝑘)‖2 with positive altitude. More realistic models can replace
+it while retaining the formulation. State all units and convert dBm to W before evaluation. Rate (17) is an effective-rate
+approximation. An outage extension must specify coding, failures, and retransmissions consistently.
+Let 𝐿𝑃
+𝑚be probe bits and 𝐿𝑇
+𝑚model-update bits, using fixed compression. For active links,
+𝑡𝑟,𝑘
+𝑚,𝑢= 𝐶𝑟,𝑘
+𝑚
+𝑓𝑟,𝑘
+𝑚
++
+𝐿𝑟
+𝑚
+𝑅𝑟,𝑘
+𝑚,𝑢
+.
+(18)
+Clients compute in parallel and upload on reserved orthogonal bands. The base scheduler does not reallocate bandwidth
+after a client finishes; this is conservative but reproducible.
+Research working draft: Preprint submitted to Elsevier
+Page 4 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+3.3. Downlink, synchronization, and elapsed time
+Let 𝐷𝑘
+𝑃and 𝐷𝑘
+𝑇be model-distribution times. Clients already holding 𝑤𝑘after probing do not download it again.
+Then
+𝑇𝑘
+𝑟= 𝐷𝑘
+𝑟+
+max
+(𝑚,𝑢)∶𝑣𝑟,𝑘
+𝑚,𝑢=1
+𝑡𝑟,𝑘
+𝑚,𝑢.
+(19)
+An empty phase has duration zero. Total duration is
+𝑇𝑘= 𝑡𝑘
+opt,𝑃+ 𝑇𝑘
+𝑃+ 𝑡𝑘
+opt,𝑇+ 𝑇𝑘
+𝑇+ 𝑡𝑘
+agg + 𝑡𝑘
+bh.
+(20)
+This assumes sequential phases. Overlap requires a critical-path calculation. Backhaul and aggregation must be modeled
+or calibrated, not implicitly free. For example, a sequential dedicated backhaul gives 𝑡𝑘
+bh = ∑
+𝑢∶𝑃𝑢,𝑘>0 𝐿agg
+𝑢∕𝑅bh
+𝑢;
+simultaneous dedicated links use a maximum instead. Pick one protocol.
+Optimizer latency is measured on the deployment hardware. If optimizer computations occur offline, do not add that
+offline time to every physical round; report it separately. Online searches consume elapsed time and possibly coordinator
+energy.
+3.4. Energy, system boundary, and batteries
+Under a dynamic CPU energy model,
+𝐸cmp,𝑟,𝑘
+𝑚
+= 𝜅𝑚𝐶𝑟,𝑘
+𝑚(𝑓𝑟,𝑘
+𝑚)2,
+𝐸tx,𝑟,𝑘
+𝑚,𝑢
+= 𝑃𝑚
+𝐿𝑟
+𝑚
+𝑅𝑟,𝑘
+𝑚,𝑢
+.
+(21)
+Calibrate 𝜅𝑚; add static device power when material. Phase energy is the sum over active links. Total operational energy
+is
+𝐸𝑘= 𝐸𝑘
+𝑃+ 𝐸𝑘
+𝑇+ 𝐸𝑘
+DL + 𝐸𝑘
+agg + 𝐸𝑘
+bh + 𝐸𝑘
+flight + 𝐸𝑘
+opt.
+(22)
+For prescribed motion,
+𝐸𝑘
+flight =
+∑
+𝑢∫
+𝜏𝑘+1
+𝜏𝑘
+𝑃flight
+𝑢
+(𝑡) 𝑑𝑡.
+(23)
+Hovering yields ∑
+𝑢𝑃hover
+𝑢
+𝑇𝑘. Flight energy can depend on scheduling through elapsed time even if positions are not
+optimization variables. Report flight and radio/computation energy separately.
+For physical node 𝑖, maintain
+𝐵𝑘+1
+𝑖
+= 𝐵𝑘
+𝑖−𝐸𝑘
+𝑖≥𝐵reserve
+𝑖
+.
+(24)
+Coordinator energy enters the declared system total but not a UAV battery unless computation occurs onboard. Every
+cost is assigned to exactly one node ledger to prevent double counting.
+Example 3: faster CPU is not always useful. Take 𝐶= 108 cycles, 𝜅= 10−28, 𝐿= 2 × 106 bits, 𝑅= 107 bit/s,
+and 𝑃= 0.1 W. At 𝑓= 109 cycles/s, computation costs 0.1 s and 0.01 J; upload costs 0.2 s and 0.02 J. Total client
+time and energy are 0.3 s and 0.03 J. Doubling frequency gives 0.25 s and 0.06 J. If this client is not the slowest, the
+extra energy may not reduce round time.
+4. Three-objective optimization problem
+4.1. Nonanticipative two-stage control
+Probing uses only information available beforehand:
+𝑎𝑘
+𝑃= (𝑧𝑘, 𝑏𝑃,𝑘, 𝑓𝑃,𝑘) = 𝜋𝑃(𝑘).
+(25)
+After observing reports, training decisions are
+𝑎𝑘
+𝑇= (𝑠𝑘, 𝑏𝑇,𝑘, 𝑓𝑇,𝑘) = 𝜋𝑇(𝑘, 𝑎𝑘
+𝑃, 𝑦𝑘
+𝑘).
+(26)
+The second-stage action may depend on probe results, but not on unobserved current client statistics. Preselecting both
+stages without adapting after probing does not realize the full value of information.
+Research working draft: Preprint submitted to Elsevier
+Page 5 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+4.2. Full-horizon objective
+For a fixed 𝐾and initial checkpoint, consider
+min
+𝜋𝑃,𝜋𝑇𝐉(𝜋) =
+(
+𝔼[𝐿val(𝑤𝐾)], 𝔼
+[𝐾−1
+∑
+𝑘=0
+𝐸𝑘
+]
+, 𝔼
+[𝐾−1
+∑
+𝑘=0
+𝑇𝑘
+])
+.
+(27)
+Expectations cover declared channel, observation, and SGD randomness. Constraints include the model recursion,
+association, resources, batteries, and
+1 ≤
+∑
+𝑚
+𝑠𝑘
+𝑚≤𝑁max,
+𝑇𝑘≤𝑇max.
+(28)
+The initial deterministic/block-rate model uses predicted realized latency. A stochastic extension can impose ℙ(𝑇𝑘≤
+𝑇max ∣𝑘) ≥1 −𝜖, but must define the uncertainty distribution and independently measure violation rates.
+The base benchmark is designed to have at least one feasible participant per round. Operational states with no
+feasible participant require a declared recovery action, such as waiting for connectivity, with its time and energy charged.
+Do not silently discard those states.
+Loss, energy, and time remain separate objectives. Use fixed normalization scales for search and report raw units.
+Changing normalization dynamically can distort preference comparisons.
+4.3. Round-level approximation
+Direct optimization of complete policies is difficult. At fixed snapshot 𝑆𝑘after any probing, Direction A solves
+min
+𝑥∈(𝑆𝑘) 𝐣𝑘(𝑥) = (𝔼[𝐿val(𝑤𝑘+1(𝑥)) ∣𝑆𝑘], 𝐸𝑘(𝑥), 𝑇𝑘(𝑥)) ,
+𝑥= (𝑠, 𝑏𝑇, 𝑓𝑇).
+(29)
+Completed probe costs are constant across training candidates but retained in episode accounting. A horizon-𝐻extension
+predicts several rounds and executes only the first action.
+A Pareto solution of (29) is not guaranteed to solve (27). One-round progress can neglect future coverage or battery
+depletion. Therefore evaluate both snapshot fronts and complete FL episodes.
+4.4. Choosing an executed solution
+One schedule must be selected from the feasible archive 𝑘. A reproducible rule is
+𝑥⋆
+𝑘= arg min
+𝑥∈𝑘̂
+𝐿val(𝑥)
+s.t.
+𝐸𝑘(𝑥) ≤̄ 𝐸𝑘,
+𝑇𝑘(𝑥) ≤̄ 𝑇𝑘.
+(30)
+Budgets are fixed in advance. If no archived candidate meets them, use a predeclared minimum-violation fallback or a
+safe feasible schedule. Compare methods at common budgets or a common preference grid, not at operating points
+selected after looking at test accuracy.
+5. Solution representation and reference evaluation
+5.1. Mixed encoding and feasible decoding
+Encode client association as 𝑎𝑚∈{0, … , 𝑈}, where 0 means inactive. Set 𝑠𝑚,𝑢= 𝕀[𝑎𝑚= 𝑢]. Give active clients
+bandwidth keys 𝜌𝑚and CPU keys 𝜉𝑚∈[0, 1]:
+𝑏𝑚,𝑢= 𝐵𝑢
+exp(𝜌𝑚)
+∑
+𝑗∶𝑎𝑗=𝑢exp(𝜌𝑗),
+𝑓𝑚= 𝑓min
+𝑚
++ 𝜉𝑚(𝑓max
+𝑚
+−𝑓min
+𝑚
+).
+(31)
+Inactive clients receive zero resources. To permit unused bandwidth, add utilization 𝛾𝑢∈(0, 1] multiplying 𝑏𝑚,𝑢. Under
+the base rate model full utilization is usually natural, but this should be checked if additional interference or radio costs
+are introduced.
+Repair invalid associations and cardinality first, then resources and battery/deadline feasibility. Bound-preserving
+decoding does not automatically satisfy deadlines. When repair fails, retain constraint residuals and apply constraint
+dominance rather than silently declaring feasibility.
+Research working draft: Preprint submitted to Elsevier
+Page 6 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+5.2. Analytical resource subproblem
+For fixed bandwidth and a phase service-time bound 𝑑, an active client must satisfy
+𝐶𝑚∕𝑓𝑚+ 𝐿𝑚∕𝑅𝑚≤𝑑.
+(32)
+With only dynamic CPU energy, its lowest-energy feasible frequency is
+𝑓⋆
+𝑚= max
+{
+𝑓min
+𝑚
+,
+𝐶𝑚
+𝑑−𝐿𝑚∕𝑅𝑚
+}
+,
+(33)
+provided 𝑑> 𝐿𝑚∕𝑅𝑚and 𝑓⋆
+𝑚≤𝑓max
+𝑚
+. Otherwise the assignment is infeasible. Sweeping 𝑑reduces the evolutionary
+dimension while exposing the energy–latency trade-off. This result concerns the stated fixed-deadline subproblem, not
+every extended energy model.
+5.3. Reference evaluation and caching
+Within one snapshot, fixed local SGD work is independent of bandwidth and CPU if all selected clients finish. A
+simulator can cache each client’s reference update using identical checkpoint and random seeds, then aggregate different
+subsets. This is legitimate experimental acceleration. It is not a physical assumption that all devices train and transmit
+for free.
+Charge cache construction to evaluation cost. Do not artificially inflate the computational difficulty by recomputing
+reusable local updates for every candidate. Across multiround branches, different aggregated models usually prevent
+reuse of later updates. This is where a genuine expensive-evaluation problem can emerge.
+Highest fidelity still gives a finite-sample stochastic estimate. Repeats yield̄
+𝐿(𝑥) = 1
+𝑅
+𝑅
+∑
+𝑟=1
+𝐿(𝑟)(𝑥).
+(34)
+Use matched random seeds for paired comparisons when valid. Every candidate record must include snapshot and seed
+IDs. Evaluating candidates from different checkpoints and comparing their raw losses as one fitness landscape is invalid.
+5.4. Separating controller information from evaluation
+A reference evaluator may access simulator data to measure the true outcome of a candidate; the controller may not
+read those hidden data as free inputs. Offline optimization is explicitly labeled as such. For deployable tests, constrain
+the controller API to histories, measured links, and reports it has paid to acquire. Validation feedback, if obtained
+remotely, requires its own cost entry.
+6. Algorithmic direction A: set-aware multiobjective evolutionary optimization
+6.1. Initialization and operators
+Direction A establishes a strong single-fidelity baseline. Initialize using random feasible schedules, channel-efficient
+schedules, representative-sketch schedules, and multiple cardinalities. Mix generic and guided proposals.
+Discrete operators add, drop, swap, or reassign clients. Continuous operators mutate bandwidth and frequency keys.
+A complementarity-guided swap uses a proxy:̂
+𝐷(𝑆⧵{𝑖} ∪{𝑗}) <̂ 𝐷(𝑆),
+(35)
+wherê 𝐷is computed from permitted sketches. The proxy guides proposal generation; reference learning quality
+determines survival in offline experiments. Random proposals preserve exploration when sketches are misleading.
+For constraints 𝑔𝑗(𝑥) ≤0, define
+𝑣(𝑥) =
+∑
+𝑗
+max{0, 𝑔𝑗(𝑥)}
+𝜎𝑗
+,
+(36)
+with fixed dimensional scales 𝜎𝑗> 0. Feasible candidates dominate infeasible ones; among infeasible candidates prefer
+smaller violation. Feasible survival uses Pareto rank and diversity preservation.
+Research working draft: Preprint submitted to Elsevier
+Page 7 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Algorithm 1 Direction A: reference-evaluated evolutionary scheduling
+Require: Snapshot 𝑆𝑘, population size 𝑁, reference-evaluation budget
+1: Generate and repair a mixed initial population 
+2: Reference-evaluate candidates; initialize feasible archive 
+3: while budget remains do
+4:
+Select parents using feasibility, Pareto rank, and diversity
+5:
+Generate association and resource offspring
+6:
+Mix set-aware operators with random exploration
+7:
+Decode, repair, and compute analytical costs
+8:
+Reference-evaluate feasible offspring from the same snapshot
+9:
+Perform environmental selection and update 
+10:
+←ND(∪verified feasible offspring)
+11: end while
+12: Select one schedule using the declared deployment preference
+Table 2
+Evaluation fidelity versus physical probing. These are different mechanisms.
+Mechanism
+Information produced
+Cost accounting
+Sketch predictor
+Estimated outcome of a candidate
+Optimizer inference time/energy
+Reduced simulator rollout
+Approximate learning outcome
+Search evaluation budget
+Reference simulator rollout
+Full protocol outcome estimate
+Search and audit budgets
+Physical client probe
+Newly observed client statistic
+Download, compute, upload, waiting
+Executed FL round
+Real model update and feedback
+Full operational ledger
+6.2. Hypotheses
+Test whether set-aware operators improve the reference-verified front at equal evaluation cost and whether analytical
+CPU decoding saves search effort. Compare with generic NSGA-II, a decomposition-based MOEA, random feasible
+search, and greedy/data-diversity scheduling with the same allocator. Merely applying a known MOEA to UAV-FL is
+not sufficient evidence of methodological novelty.
+7. Algorithmic direction B: multi-fidelity evolutionary optimization
+7.1. Main idea and evaluation hierarchy
+Direction B allocates search effort among inexpensive predictions and expensive training-based evaluations.
+Candidate features can include selected-client sketch moments, estimated matching error, selected population mass,
+uncertainty, cardinality, information ages, channels, and resources. Avoid arbitrary client indices for cross-topology
+generalization.
+Define learning evaluationŝ
+𝐿1(𝑥) = calibrated sketch/history prediction,
+(37)̂
+𝐿2(𝑥) = reduced-work or reduced-validation rollout,
+(38)̂
+𝐿3(𝑥) = full-work reference validation.
+(39)
+Physical energy and time are often analytically computable at all levels. There is no benefit in approximating them
+solely to create more fidelity levels. When Level 2 runs fewer SGD steps, its analytical physical costs must still describe
+the target full-work schedule, not the shortened evaluation procedure.
+Lower fidelity can reverse candidate ranking. Before developing promotion rules, measure runtime, bias, rank
+correlation, and calibration against the reference. If cached reference evaluation is already cheap, multi-fidelity may not
+help.
+Research working draft: Preprint submitted to Elsevier
+Page 8 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Algorithm 2 Direction B: cost-aware multi-fidelity evolutionary search
+Require: Snapshot, total evaluation budget 𝐵, audit reserve 𝐵audit
+1: Generate a diverse initial set and reference-evaluate a seed subset
+2: Fit cross-fidelity calibration and initialize reference archive
+3: while search cost < 𝐵−𝐵audit do
+4:
+Generate and repair candidates with Direction A operators
+5:
+Compute analytical objectives and Level-1 learning predictions
+6:
+Update the provisional archive
+7:
+Select promotions using acquisition plus reserved exploration
+8:
+Evaluate selected candidates at chosen fidelities
+9:
+Update calibration data and reference-verified archive
+10: end while
+11: Audit final candidates using reserved independent reference evaluations
+12: Return the consistently evaluated feasible nondominated set
+7.2. Cross-fidelity calibration
+One possible discrepancy model is
+𝐿3(𝑥) = 𝑎𝓁̂𝐿𝓁(𝑥) + 𝑏𝓁+ 𝑑𝓁(𝜙(𝑥)) + 𝜖𝓁,
+𝓁∈{1, 2}.
+(40)
+Train on paired evaluations from the same snapshot. An ensemble gives a mean 𝜇3(𝑥) and calibrated uncertainty 𝑠3(𝑥).
+Across rounds, condition on snapshot descriptors or predict improvement relative to the current validation loss. Mixing
+raw losses from different training stages without conditioning corrupts the predictor.
+A conservative estimate 𝜇3(𝑥) + 𝛽𝑠3(𝑥) can be used for final minimization decisions. However, conservatism alone
+can exclude unknown clients forever; evaluation and probing policies need exploration.
+7.3. Cost-aware promotion
+For measured evaluation costs 𝑐𝓁(𝑥), enforce
+∑
+(𝑥,𝓁)∈eval
+𝑐𝓁(𝑥) ≤𝐵search.
+(41)
+Use a declared unit such as GPU-seconds or wall time; record parallelism. One proposed promotion heuristic is
+𝐴(𝑥, 𝓁) =̂ ℙ(𝑥changes the reference front)̂ Δ𝑈(𝑥, 𝓁)
+𝑐𝓁(𝑥) + 𝜖
+.
+(42)
+Herê Δ𝑈predicts reduction of uncertainty relevant to front membership. Estimate the probability by sampling the
+calibrated loss predictor with analytical energy/time. This is a research heuristic, not a proven optimal acquisition policy.
+A simpler implementable alternative is optimistic hypervolume improvement per cost. For normalized minimization
+objectives, compute an optimistic point using 𝜇3 −𝛽𝑠3 for loss and exact analytical energy/time, evaluate its potential
+hypervolume gain, and divide by promotion cost. Retain an explicit exploration fraction; otherwise inaccurate confidence
+estimates can eliminate useful candidates permanently. Compare the heuristic with random promotion, uncertainty-only
+promotion, and a fixed fidelity schedule.
+7.4. Verified archives and final audits
+Maintain pred for provisional surrogate-guided candidates and ref for common-protocol reference evaluations.
+Only the latter supports final Pareto-quality claims. Do not mix predicted and reference loss values in headline
+hypervolume calculations.
+Reserve audit resources before search. Re-evaluate reported solutions with an independent common reference
+protocol, then recompute nondominance. Report search and audit cost separately, including discarded evaluations.
+Research working draft: Preprint submitted to Elsevier
+Page 9 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Algorithm 3 Direction C: probing with adaptive second-stage scheduling
+Require: Initial model, batteries, histories, predictor, common deployment budgets
+1: for 𝑘= 0, … , 𝐾−1 do
+2:
+Observe permitted physical state and update stale-information features
+3:
+Generate candidate probe sets including the empty set
+4:
+Estimate net information value under current resource constraints
+5:
+Execute a feasible probe plan and charge all physical costs
+6:
+Update client reports, timestamps, and belief uncertainty
+7:
+Reoptimize training selection and resources with the new information
+8:
+Execute one schedule chosen by the predeclared Pareto preference
+9:
+Aggregate updates and advance the physical clock
+10:
+Update batteries and accessible validation/learning feedback
+11: end for
+7.5. Offline versus online interpretation
+Offline branching can evaluate many counterfactual schedules. A physical online controller generally cannot perform
+full local training for many alternative sets without paying for it. The deployable version uses simulator-trained models,
+permitted history, and charged probes; it executes one schedule and uses accessible feedback to update its predictor.
+Online trial training, if used, is an actual operation and must appear in the operational ledger. If labels or validation
+feedback are delayed, state the feedback delay and do not pretend instantaneous full validation is available. Monitor
+calibration under deployment shift and define a fallback to a conservative feasible schedule when predictions become
+unreliable.
+8. Algorithmic direction C: adaptive probing and online recourse
+8.1. Value of acquiring information
+Uncertainty is useful only if resolving it could change the executed schedule. A highly uncertain client with no
+feasible uplink may not justify probing.
+For a fixed deployment preference 𝜆, define a normalized scalar cost
+𝐶𝜆(𝑎, 𝜃) = 𝜆𝐿̃𝐿(𝑎, 𝜃) + 𝜆𝐸̃𝐸(𝑎) + 𝜆𝑇̃ 𝑇(𝑎),
+(43)
+where 𝜃denotes hidden learning statistics. Holding the second-stage action domain fixed for the conceptual comparison,
+expected sample information value is
+EVSI(𝑃) = min
+𝑎𝔼[𝐶𝜆(𝑎, 𝜃) ∣𝑘]
+(44)
+−𝔼𝑦𝑃
+[
+min
+𝑎𝔼[𝐶𝜆(𝑎, 𝜃) ∣𝑘, 𝑦𝑃]
+]
+.
+(45)
+Subtract the normalized probe cost to estimate net value. In the actual constrained problem, probe execution also reduces
+remaining budgets and changes elapsed time; account for these effects during recourse.
+Approximate (45) with a small set of belief scenarios and candidate training schedules. Include the empty probe set.
+This approximation is a proposed component requiring ablation, not an established guarantee.
+8.2. Online procedure
+Rerunning the training scheduler after probing is essential. Keeping the original training set fixed tests reporting
+overhead, not meaningful adaptive recourse.
+8.3. Optional nonstationary extension
+After stationary experiments, introduce new classes, gradual distribution shifts, or intermittent connectivity. At
+fixed mission horizon 𝑇mission, replace terminal loss by
+𝐽online
+𝐿
+=
+1
+𝑇mission
+𝔼
+[
+∫
+𝑇mission
+0
+𝐿val,𝑡(𝑤(𝑡)) 𝑑𝑡
+]
+.
+(46)
+Research working draft: Preprint submitted to Elsevier
+Page 10 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Table 3
+Staged benchmark matrix.
+Factor
+Initial study
+Stress test
+Scale
+𝑀= 6, 20; 𝑈= 2
+𝑀= 50, 100; 𝑈= 3, 5
+Data/model
+Fashion-MNIST, small CNN
+CIFAR-10, larger CNN
+Heterogeneity
+IID; Dirichlet 𝛼= 1, 0.1
+Geographically correlated classes
+Rare data
+Controlled minority classes
+Minority clients on weak links
+Data quality
+Clean datasets
+Declared fraction of label noise
+Observability
+Fixed fresh/historical reports
+Costly probes and stale reports
+Dynamics
+Stationary data, prescribed motion
+Physical-time distribution shifts
+Evaluation
+One-round cached reference
+Multiround branching rollout
+This measures sustained quality instead of final recovery alone. Trigger shifts using common physical times, not FL
+round numbers, because algorithms can have different round durations. Continual learning and personalized modeling
+are separate design choices and should not be added before the scheduling contribution is understood.
+9. Benchmark construction and experimental protocol
+9.1. Research questions
+RQ1: Does set-aware scheduling improve the loss–energy–time trade-off over channel-only and generic evolutionary
+methods?
+RQ2: Does multi-fidelity evaluation improve independently verified solution quality at equal actual search cost?
+RQ3: Does adaptive probing improve complete FL episodes after its physical overhead is counted?
+RQ4: Which regimes cause failures through rare-client exclusion, noisy data, stale reports, or fidelity rank reversal?
+9.2. Scenario construction
+The following are proposed starting configurations, not measured system specifications. Fix the total number of
+training examples when varying client count, or label a growing-data study explicitly. Use independent data partitions
+and mobility traces. Create paired scenarios moving the same rare-data client from a good to a poor channel, to isolate
+statistical–physical coupling. State the class imbalance used in both target validation and test sets.
+9.3. Baselines and fairness
+Use three baseline groups:
+1. Scheduling: random participation, channel greedy, an Oort-style utility policy, a gradient-diversity policy, and a
+gradient-similarity policy. Identify adaptations rather than claiming exact reproductions.
+2. Optimization: random feasible search, single-fidelity NSGA-II, a decomposition-based MOEA, and the same
+proposed operators without multi-fidelity.
+3. Information: no new probes, periodic probes, random probes, uncertainty-only probes, information-value probes,
+and a fully observed oracle.
+Deployable methods receive the same permitted information; extra statistics carry acquisition cost. The oracle is a
+diagnostic comparator, not a fair deployable competitor. Use the same resource allocator when isolating client selection
+and the same selection when isolating allocation.
+Equalize actual optimizer time or profiled evaluation cost, not only fitness-call counts. Include cache construction,
+model fitting, promotion, and reference audits. Match worker counts and hardware. Tune on separate scenarios; hold
+out data partitions, mobility traces, and network sizes where practical.
+Research working draft: Preprint submitted to Elsevier
+Page 11 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+Table 4
+Suggested implementation responsibilities.
+Module
+Responsibility
+fl_engine
+Immutable checkpoints, local SGD, aggregation, validation
+network_model
+Eligibility, rates, downlink/backhaul, phase times
+energy_model
+Node-level cost ledger, hovering, batteries
+schedule
+Encoding, decoding, repairs, constraint residuals
+evaluators
+Fidelity wrappers, seeds, caches, measured search costs
+moea
+Operators, selection, provisional and verified archives
+belief_probe
+Reports, uncertainty, probe choice and recourse
+experiments
+Scenario manifests, paired runs, audits and metrics
+9.4. Metrics and statistical reporting
+For snapshot fronts, report reference-verified hypervolume using common normalization and a fixed dominated
+reference point. Use IGD only with a credible common reference set; label a pooled empirical reference as approximate
+and test sensitivity.
+For complete FL runs, report final test loss/accuracy, macro-F1, rare-class recall, energy/time to a common accuracy
+target, battery depletion, deadline violations, probe bytes and energy, and optimizer latency. Explicitly report runs that
+do not reach the target. Under drift, measure time-integrated loss and recovery delay.
+Use at least five independent seeds for pilot work and aim for ten or more paired runs for main comparisons, guided
+by observed variance and compute cost. Report mean, dispersion, and paired confidence intervals. Tuning trials are not
+independent test runs. Inspect full trajectories; final accuracy alone can conceal long periods of poor performance.
+9.5. Ablations and failure diagnostics
+• Set-dependent versus independent client scoring.
+• Generic versus guided mutation; analytical versus evolved CPU allocation.
+• Single fidelity versus fixed promotion versus adaptive promotion.
+• Cross-fidelity calibration and exploration reserve on/off.
+• No, periodic, uncertainty-only, and information-value probing.
+• Full operational accounting versus deliberately omitted costs as a diagnostic only.
+• One-round versus short-horizon search under equal compute budgets.
+Measure fidelity rank reversals, prediction calibration across training stages, promotion cost per verified gain, and
+rare/noisy client selection frequencies. Explain negative results, especially when one-round reference caching eliminates
+the intended evaluation bottleneck.
+10. Implementation roadmap and verification exercises
+10.1. Software modules
+An evaluation record contains snapshot ID, candidate hash, fidelity, partition ID, random seed, objectives, constraint
+residuals, evaluation cost, and verification status. Cache keys include model version and local-training configuration.
+Keep hidden simulator truth separate from the controller interface.
+10.2. Student work packages
+WP1. Six-client physical model. Implement links, allocations, duration, energy, and batteries. Deliver a hand-checked
+instance and restricted subset enumeration.
+WP2. FL integration. Add local SGD and weighted UAV aggregation. Deliver reproducible snapshots and numerical
+equivalence of hierarchical and flat aggregation.
+Research working draft: Preprint submitted to Elsevier
+Page 12 of 13
+
+Multi-Fidelity UAV-Assisted Federated Learning
+WP3. Direction A. Implement generic and set-aware search. Deliver consistently evaluated fronts and end-to-end runs
+under one common deployment rule.
+WP4. Fidelity pilot. Measure cached reference costs, reduced-rollout costs, rank correlations, and calibration. Deliver
+evidence that multi-fidelity is useful, or revise the setting.
+WP5. Direction B. Add promotion, calibration, exploration, and independent auditing. Deliver equal-cost comparisons
+and ablations.
+WP6. Direction C. Enforce partial observation and add charged probing with recourse. Deliver stale-information and
+rare-data experiments.
+Different students can own modules, but use a common configuration schema and cost ledger. Integrate after each work
+package. Do not develop multiple incompatible simulators and combine them only at the end.
+10.3. Verification exercises
+1. Reproduce the arithmetic in Examples 1–3.
+2. Verify inactive clients receive zero resources and incur no local-training cost.
+3. Check association, bandwidth, frequency, and battery constraints after every decode.
+4. Compare hierarchical and flat aggregation to numerical precision.
+5. Confirm candidate evaluation never changes the source checkpoint.
+6. Verify identical seeds reproduce local updates and evaluation values.
+7. Ensure probing and training do not double-charge the same model download.
+8. Check that a deployable controller cannot access unqueried current gradients.
+9. Confirm longer hovering duration increases flight energy.
+10. Re-evaluate every reported Pareto point at the same reference fidelity.
+11. For six clients, enumerate all nonempty subsets with fixed allocation and compare with the search archive. Label
+this as an exact restricted benchmark, not an exact solution of the full continuous problem.
+12. Use synthetic known objectives to test dominance and archive updates independently of FL.
+10.4. Decision gates and contribution boundaries
+Proceed to Direction B only if profiling shows an evaluation bottleneck and a useful fidelity hierarchy. Proceed
+to Direction C only after the scheduler works with a fixed information set. If probing overhead exceeds its gains,
+characterize when historical reports are sufficient.
+Potential contributions include consistent information/resource modeling, set-aware operators, cost-aware fidelity
+promotion with verified archives, and evidence about stale-information failure modes. These are proposed contributions,
+not established novelty or convergence claims. The eventual paper must compare against the closest UAV-FL, client-
+selection, and multi-fidelity optimization literature.
+Recommended first experiment. Use two UAVs, six clients, fixed local work, and one initial checkpoint. Place
+the rare-class client on a weak link, enumerate a restricted space, and measure true validation trade-offs. Compare
+generic with set-aware search at equal reference cost. Introduce surrogate evaluation and adaptive probing only after
+this controlled experiment is reliable.
+Research working draft: Preprint submitted to Elsevier
+Page 13 of 13
