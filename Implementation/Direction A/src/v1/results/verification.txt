@@ -1,0 +1,19 @@
+test_audit_namespace_and_hierarchical_aggregation (test_core.LearningTests.test_audit_namespace_and_hierarchical_aggregation) ... ok
+test_guide_missing_stale_and_unequal_weights (test_core.LearningTests.test_guide_missing_stale_and_unequal_weights) ... ok
+test_guided_swap_keeps_unknown_clients (test_core.LearningTests.test_guided_swap_keeps_unknown_clients) ... ok
+test_model_count_and_cache_determinism (test_core.LearningTests.test_model_count_and_cache_determinism) ... ok
+test_exact_hypervolume (test_core.MetricTests.test_exact_hypervolume) ... ok
+test_nondominance (test_core.MetricTests.test_nondominance) ... ok
+test_weights_and_scalarization (test_core.MetricTests.test_weights_and_scalarization) ... ok
+test_zero_range_crowding_and_constraints (test_core.MetricTests.test_zero_range_crowding_and_constraints) ... ok
+test_bandwidth_and_mask (test_core.ModelTests.test_bandwidth_and_mask) ... ok
+test_cpu_reduction_preserves_service (test_core.ModelTests.test_cpu_reduction_preserves_service) ... ok
+test_deadline_battery_and_nonfinite (test_core.ModelTests.test_deadline_battery_and_nonfinite) ... ok
+test_empty_uav_still_hovers (test_core.ModelTests.test_empty_uav_still_hovers) ... ok
+test_exact_ledger_and_timeline (test_core.ModelTests.test_exact_ledger_and_timeline) ... ok
+test_both_algorithms_and_locked_budget (test_core.OptimizerTests.test_both_algorithms_and_locked_budget) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.340s
+
+OK

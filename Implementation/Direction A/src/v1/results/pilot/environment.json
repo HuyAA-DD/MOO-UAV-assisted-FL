@@ -1,0 +1,32 @@
+{
+  "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 141 Stepping 1, GenuineIntel",
+  "torch": "2.13.0+cpu",
+  "numpy": "2.2.6",
+  "torch_threads": 1,
+  "cuda": false,
+  "device": "cpu",
+  "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105
+  ],
+  "rounds": 1,
+  "source_sha256": {
+    "uavfl\\__init__.py": "c0ae4b8d19cbd7474effa0a5afd600f2fc8542ca97862f8476ffc73eab82da03",
+    "uavfl\\config.py": "0927c6c2fbb7b39d8c8b2be2645bf6921a3f661600bbe779fb2f0b58db8868c7",
+    "uavfl\\data.py": "4b68bfa3cc8f0787a0a8cab4f985745e70f825999b5292546efe7d247e9a63be",
+    "uavfl\\experiment.py": "de70235d03d0d95efe9c902acc378e9b3f2c0948a8d558d56f13812f9c0f26a2",
+    "uavfl\\learning.py": "04bc5ed5f693380f5c7df797589eb69f157a7c8cc14634488fc0c4f3af4d4ad1",
+    "uavfl\\metrics.py": "ff39489f1761c77f997887fdc7bd941f9c0271567013e704bdcfd1d52ad3289f",
+    "uavfl\\operators.py": "e5728e9026049ddcf02f97891f38650d3d20db9e5b0d933d0bc5c5b7c272bf1f",
+    "uavfl\\optimizers.py": "bc6d772834ae69940e76b1056dc1d71d9ca5685143730caad7b20d643dd08378",
+    "uavfl\\physics.py": "8d09cffca2d1913314d82649c224055c66607780eb6b455059bcfa8fcedc5fc9",
+    "uavfl\\plots.py": "30d904ddcf2ebcd77aa63daa58a38edd3839d01cf138eac673f7c71c95e16ba9",
+    "run.py": "4cd4522518b67cc1e02c3839883854074dde0644b371dab1470d83ce14b13550"
+  },
+  "git_head": "b1699a9d2e80957bd8bae703e2d539e3b1634df5"
+}

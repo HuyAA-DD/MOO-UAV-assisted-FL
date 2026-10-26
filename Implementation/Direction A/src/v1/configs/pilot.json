@@ -1,0 +1,21 @@
+{
+  "data": {
+    "train": 6000,
+    "search": 600,
+    "audit": 600,
+    "test": 1000,
+    "partition": "dirichlet",
+    "alpha": 0.5
+  },
+  "search": {
+    "population": 28,
+    "seconds": 30,
+    "max_proposals": 10000,
+    "guided_probability": 0
+  },
+  "fl": {
+    "local_steps": 5,
+    "search_replicates": 3,
+    "audit_replicates": 10
+  }
+}

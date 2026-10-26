@@ -1,0 +1,9 @@
+{
+  "main_runs": 20,
+  "candidate_records": 130073,
+  "feasible_records": 129756,
+  "episode_rounds": 6,
+  "source_hashes_match": true,
+  "audited_hv_recomputed": true,
+  "all_ledgers_verified": true
+}

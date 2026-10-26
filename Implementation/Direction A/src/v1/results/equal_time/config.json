@@ -1,0 +1,131 @@
+{
+  "data": {
+    "train": 6000,
+    "search": 600,
+    "audit": 600,
+    "test": 1000,
+    "partition": "dirichlet",
+    "alpha": 0.5
+  },
+  "fl": {
+    "local_steps": 5,
+    "batch_size": 32,
+    "lr": 0.01,
+    "search_replicates": 3,
+    "audit_replicates": 10,
+    "threads": 1
+  },
+  "search": {
+    "population": 28,
+    "seconds": 15,
+    "max_proposals": 100000,
+    "neighbors": 8,
+    "neighbor_probability": 0.9,
+    "max_replacements": 2,
+    "guided_probability": 0,
+    "guided_trials": 16,
+    "history_max_age": 30.0,
+    "history_max_drift": 0.1,
+    "scales": [
+      2.302585092994046,
+      1000.0,
+      5.0
+    ],
+    "hv_reference": [
+      1.5,
+      1.0,
+      1.0
+    ],
+    "preference": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "trace_seconds": 1.0
+  },
+  "network": {
+    "uav_positions": [
+      [
+        0,
+        0,
+        100
+      ],
+      [
+        200,
+        0,
+        100
+      ]
+    ],
+    "client_positions": [
+      [
+        -80,
+        -40,
+        0
+      ],
+      [
+        0,
+        40,
+        0
+      ],
+      [
+        70,
+        -20,
+        0
+      ],
+      [
+        130,
+        50,
+        0
+      ],
+      [
+        220,
+        -40,
+        0
+      ],
+      [
+        300,
+        30,
+        0
+      ]
+    ],
+    "radius": 350.0,
+    "nmax": 4,
+    "bandwidth": 2000000.0,
+    "bmin": 50000.0,
+    "tx_power": 0.1,
+    "noise_psd": 4e-20,
+    "beta0": 0.0001,
+    "mac_efficiency": 0.8,
+    "coding_gap": 1.0,
+    "fmin": 500000000.0,
+    "fmax": 2000000000.0,
+    "kappa": 1e-28,
+    "train_cycles": 100000000.0,
+    "report_cycles": 1000000.0,
+    "coordinator_down_rate": 20000000.0,
+    "client_down_rate": 5000000.0,
+    "backhaul_rate": 20000000.0,
+    "agg_setup": 0.002,
+    "agg_per_client": 0.001,
+    "global_agg_setup": 0.002,
+    "global_agg_per_uav": 0.001,
+    "client_base": 0.05,
+    "client_rx": 0.05,
+    "uav_base": 5.0,
+    "hover_power": 80.0,
+    "uav_rx": 0.2,
+    "uav_tx": 1.0,
+    "uav_agg": 2.0,
+    "coordinator_base": 20.0,
+    "coordinator_tx": 2.0,
+    "coordinator_rx": 0.5,
+    "coordinator_agg": 5.0,
+    "client_battery": 1000.0,
+    "client_reserve": 100.0,
+    "uav_battery": 20000.0,
+    "uav_reserve": 2000.0,
+    "deadline": 5.0,
+    "sketch_dimension": 64,
+    "metadata_bits": 256
+  }
+}
