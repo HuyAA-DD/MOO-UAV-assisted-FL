@@ -36,7 +36,7 @@ Phạm vi ban đầu theo draft JNCA:
 - Mô hình kênh ban đầu xem kênh không đổi trong một vòng.
 - Bộ điều khiển sử dụng trạng thái mạng và các báo cáo được phép quan sát; không mặc định biết gradient hiện tại của mọi client.
 
-Offloading ứng dụng độc lập trong bài FSTPO, tối ưu quỹ đạo, personalized FL và concept drift nằm ngoài phạm vi khởi đầu.
+Bản triển khai v1 hiện dùng UAV hover với vị trí cố định; chuyển động cho trước theo draft là bước mở rộng tiếp theo. Offloading ứng dụng độc lập trong bài FSTPO, tối ưu quỹ đạo, personalized FL và concept drift nằm ngoài phạm vi khởi đầu.
 
 ## 3. Bài toán tối ưu đa mục tiêu
 
@@ -100,7 +100,7 @@ Trong hướng B, tập nghiệm dự đoán và tập nghiệm đã đánh giá
 4. **Khảo sát và phát triển hướng B:** đo chi phí, sai lệch và tương quan thứ hạng giữa các mức đánh giá trước khi thiết kế cơ chế nâng mức.
 5. **Mở rộng sang hướng C:** thêm báo cáo cũ, probing và lập lịch lại sau quan sát; tính đủ chi phí thu thông tin.
 
-Kịch bản khởi đầu đặt client chứa lớp hiếm trên kênh yếu, kết hợp client dữ liệu phổ biến và client có nhãn nhiễu. Fashion-MNIST với CNN nhỏ là cấu hình khởi đầu được đề xuất; CIFAR-10 và mạng lớn hơn dành cho bước mở rộng.
+Kịch bản mở rộng dự kiến đặt client chứa lớp hiếm trên kênh yếu, kết hợp client dữ liệu phổ biến và client có nhãn nhiễu; các kịch bản này chưa được đánh giá đầy đủ trong v1. Fashion-MNIST với CNN nhỏ là cấu hình khởi đầu được đề xuất; CIFAR-10 và mạng lớn hơn dành cho bước mở rộng.
 
 Các chỉ số dự kiến gồm chất lượng Pareto đã kiểm chứng, test loss/accuracy, macro-F1, recall lớp hiếm, thời gian/năng lượng đến một chất lượng mục tiêu, vi phạm deadline, mức tiêu hao pin và chi phí optimizer/probing. So sánh cần thống nhất dữ liệu, giao thức FL, thông tin được phép sử dụng và ngân sách thực tế.
 
@@ -116,8 +116,19 @@ MOO-UAV-assisted-FL/
 |   `-- weekly presentation/     # Slide PDF và mã LaTeX
 `-- Implementation/
     |-- Direction A/
-    |-- Direction B/
-    `-- Direction C/
+    |   |-- Deep Report/         # Phân tích và phản biện Direction A
+    |   `-- src/v1/
+    |       |-- problem-formulation.md
+    |       |-- README.md
+    |       |-- report.md
+    |       |-- run.py
+    |       |-- make_report.py
+    |       |-- configs/
+    |       |-- uavfl/           # Mô hình, FL engine, NSGA-II và MOEA/D
+    |       |-- tests/
+    |       `-- results/         # Benchmark, logs và biểu đồ
+    |-- Direction B/             # Chưa triển khai
+    `-- Direction C/             # Chưa triển khai
 ```
 
 - [Bài báo FSTPO](docs/source%20idea/Federated_Spatio-Temporal_Policy_Learning_for_Efficient_Resource_Management_in_UAV-Assisted_IoT_Edge_Networks.pdf): mô hình mạng và ý tưởng tham khảo ban đầu.
@@ -127,6 +138,92 @@ MOO-UAV-assisted-FL/
 
 ## 7. Trạng thái hiện tại
 
-Project đang ở giai đoạn **phát triển ý tưởng và đặc tả bài toán**. Repository hiện chứa tài liệu tham khảo, draft và slide; ba thư mục triển khai A/B/C còn trống. Chưa có chương trình thực nghiệm hoặc kết quả benchmark.
+**Cập nhật ngày 26/10/2026:** project đã có bản triển khai và benchmark ban đầu của Direction A tại [src/v1](Implementation/Direction%20A/src/v1/README.md).
 
-Bước tiếp theo là xây dựng mô phỏng mạng và FL engine dùng chung, sau đó triển khai hướng A trước khi bổ sung B và C. Tính mới và hiệu quả của các đóng góp dự kiến cần được kiểm chứng trước khi hoàn thiện bài báo.
+### Đã hoàn thành
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Mô hình bài toán Direction A | Đã đặc tả giả thiết, biến, ba mục tiêu, ràng buộc, giao thức đánh giá và chi phí từng nút. |
+| Mô phỏng mạng | 6 client, 2 UAV hover; uplink, downlink, backhaul, tổng hợp, bandwidth/CPU, deadline và pin. |
+| FL engine | Fashion-MNIST, CNN 105866 tham số, local SGD và tổng hợp phân cấp có trọng số; có cache update/loss. |
+| Thuật toán | Đã triển khai NSGA-II và MOEA/D dùng chung evaluator, bộ sinh ứng viên và mô hình tài nguyên. |
+| Search và audit | Tách dữ liệu/RNG; lựa chọn lịch trước khi mở audit/test; lưu kết quả thô và biểu đồ. |
+| Historical guidance | Có code và kiểm thử; tắt trong so sánh chính để tập trung so sánh hai optimizer. |
+| Kiểm thử | 14 kiểm thử đạt; đã rà ledger/timeline/mean loss của 130073 candidate records. |
+| Direction B và C | Đang ở mức định hướng trong draft; các thư mục triển khai còn trống. |
+
+### Phạm vi tối ưu và số vòng FL
+
+**Mỗi lần gọi NSGA-II/MOEA/D hiện chỉ tối ưu cho một vòng FL**, tại checkpoint và trạng thái mạng hiện tại. Ba mục tiêu là validation loss sau vòng đó, năng lượng của vòng và thời gian hoàn thành vòng.
+
+Runner hỗ trợ nhiều vòng liên tiếp: tối ưu vòng hiện tại → chọn một lịch → thực thi local SGD và tổng hợp → cập nhật model, pin, đồng hồ, history → chuyển sang vòng tiếp theo. Optimizer chưa nhìn trước các vòng sau để tối ưu trực tiếp loss cuối cùng và tổng chi phí toàn quá trình.
+
+| Cấu hình đã chạy | Phạm vi |
+| --- | --- |
+| So sánh chính theo thời gian | 5 seed × 2 thuật toán = 10 lần chạy; **1 vòng FL/lần chạy**, trần search 15 giây. |
+| So sánh bổ sung theo proposals | 5 seed × 2 thuật toán = 10 lần chạy; **1 vòng FL/lần chạy**, 10000 proposals, trần 30 giây. |
+| Kiểm tra tích hợp nhiều vòng | Mỗi thuật toán chạy một episode **3 vòng FL**; tổng cộng 6 vòng, guidance probability=0.5. |
+| Mặc định CLI | 1 vòng FL; thay đổi bằng tham số --rounds. |
+
+Trong pilot chính, mỗi client được chọn thực hiện **5 bước SGD cục bộ trong một vòng FL**. 5 seed là các lần chạy độc lập; số bước local SGD và số seed không phải số vòng FL.
+
+### Kết quả ban đầu và giới hạn
+
+Với cùng trần 15 giây tìm kiếm, audited hypervolume trung bình qua 5 seed:
+
+| Thuật toán | Audited HV trung bình |
+| --- | ---: |
+| NSGA-II | 0.28779859 |
+| MOEA/D | 0.28780684 |
+
+Hai kết quả rất gần nhau; chưa đủ bằng chứng để kết luận thuật toán nào tốt hơn nói chung. Chi tiết từng seed, thống kê ghép cặp, thời gian thực và overrun nằm trong [report.md](Implementation/Direction%20A/src/v1/report.md).
+
+**Số client được phép chọn là từ 1 đến 4 mỗi vòng. Tuy nhiên, các lịch cuối được chọn trong các thí nghiệm hiện tại đều chỉ có 1 client**, bao gồm cả ca kiểm tra 3 vòng. Đây là kết quả lựa chọn dưới hàm mục tiêu, scale và preference hiện tại, không phải code cố định số client bằng 1.
+
+Checkpoint ban đầu là model ngẫu nhiên; local SGD ngắn nên lợi ích learning của việc thêm client còn nhỏ, trong khi thời gian và năng lượng hover/baseline có ảnh hưởng lớn. Các kết quả này kiểm tra pipeline và optimizer; chưa thể hiện rõ lợi ích học cộng tác nhiều client hoặc hội tụ FL dài hạn.
+
+Các giới hạn khác của v1:
+
+- UAV hover, kênh effective-rate xác định; chưa có dynamic channel, mất gói hoặc tối ưu quỹ đạo.
+- Các hệ số phần cứng là scalar chung cho nhóm nút; chưa hỗ trợ đầy đủ phần cứng dị biệt từng client.
+- Cycles/power/energy là tham số mô phỏng tổng hợp, chưa phải số đo trên thiết bị/UAV thật.
+- Chưa đánh giá đóng góp set-aware trong một benchmark chính; ca nhiều vòng hiện chỉ là kiểm tra tích hợp.
+- Chưa triển khai multi-fidelity evaluation và adaptive probing.
+
+### Tài liệu triển khai và chạy lại
+
+- [Đặc tả bài toán](Implementation/Direction%20A/src/v1/problem-formulation.md).
+- [Hướng dẫn v1](Implementation/Direction%20A/src/v1/README.md).
+- [Báo cáo so sánh](Implementation/Direction%20A/src/v1/report.md).
+- [Kết quả cùng trần thời gian](Implementation/Direction%20A/src/v1/results/equal_time/summary.csv).
+- [Kết quả 10000 proposals](Implementation/Direction%20A/src/v1/results/pilot/summary.csv).
+- [Kiểm tra 3 vòng](Implementation/Direction%20A/src/v1/results/episode_smoke/summary.csv).
+
+Từ thư mục gốc project, chạy trong PowerShell:
+
+~~~powershell
+Set-Location "Implementation/Direction A/src/v1"
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
+python run.py --config configs/equal_time.json --seeds 101 102 103 104 105 --output results/my_equal_time --download
+~~~
+
+Ví dụ chạy 20 vòng liên tiếp với một seed:
+
+~~~powershell
+python run.py --config configs/pilot.json --seeds 101 --rounds 20 --output results/fl20
+~~~
+
+Lệnh nhiều vòng vẫn lặp bộ tối ưu một vòng. Đây là cấu hình chạy tiếp, chưa phải thí nghiệm 20 vòng đã được báo cáo; khả năng hoàn thành còn phụ thuộc các ràng buộc pin/deadline.
+
+### Ưu tiên tiếp theo
+
+1. Chạy đủ nhiều vòng FL và theo dõi loss/accuracy theo thời gian, tổng năng lượng, thời gian đến chất lượng mục tiêu và mức pin còn lại.
+2. Rà lại normalization, preference và ảnh hưởng hover để giải thích xu hướng chọn một client; đo tác động của việc chọn nhiều client lên chất lượng học.
+3. Đánh giá tại các checkpoint đã học, với dữ liệu/thiết bị dị biệt và quy mô mạng lớn hơn.
+4. So sánh generic với set-aware mutation trong cùng điều kiện thông tin, tài nguyên và ngân sách.
+5. Sau khi Direction A ổn định, profiling chi phí evaluator để quyết định triển khai Direction B; tiếp tục Direction C khi đã chốt mô hình quan sát và chi phí probing.
+
+Tối ưu tốt từng vòng chưa bảo đảm tối ưu toàn bộ quá trình FL. Tính mới và hiệu quả nghiên cứu cần tiếp tục được kiểm chứng qua các thí nghiệm trên.
+
