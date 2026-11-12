@@ -1,0 +1,5 @@
+- Mô hình bài toán đơn giản : m client mặt đất đứng yên, n UAV lơ lửng, trạm server
+- Kế thừa các mô hình toán học của bài báo gốc
+- Mỗi round chỉ có đúng n client tham gia vào việc training
+- Cần xử lí : client selection, resource allocation band-width 
+- Tối ưu đa mục tiêu : Độ chính xác, năng lượng, thời gian
