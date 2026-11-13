@@ -1,0 +1,662 @@
+% !TeX program = xelatex
+% Build from this directory: tectonic slide1211.tex
+% Assets and bundled Lato fonts are shared with slides.tex.
+% Source: Implementation/Direction A/src/v2/problem-formulation.md
+% HUST template 4:3, dated 12 November 2026.
+\documentclass[10pt,aspectratio=43]{beamer}
+\usepackage[no-math]{fontspec}
+\setsansfont{Lato}[Path=assets/fonts/,Extension=.ttf,
+ UprightFont=*-Regular,BoldFont=*-Bold,ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic]
+\setmainfont{Lato}[Path=assets/fonts/,Extension=.ttf,
+ UprightFont=*-Regular,BoldFont=*-Bold,ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic]
+\usepackage{amsmath,amssymb,booktabs,tabularx,graphicx,tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usefonttheme{professionalfonts}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\definecolor{HustRed}{HTML}{C00000}
+\definecolor{Ink}{HTML}{292929}
+\definecolor{Muted}{HTML}{666666}
+\definecolor{Blue}{HTML}{2F6591}
+\setbeamercolor{normal text}{fg=Ink,bg=white}
+\setbeamercolor{structure}{fg=HustRed}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[circle]
+\setbeamersize{text margin left=.58cm,text margin right=.58cm}
+\setbeamertemplate{background}{\includegraphics[width=\paperwidth,height=\paperheight]{assets/hust/content.png}}
+\setbeamertemplate{frametitle}{%
+ \begin{tikzpicture}[remember picture,overlay]
+ \node[anchor=west,text=white,inner sep=0pt,
+ font=\fontsize{13.4}{15}\selectfont\bfseries]
+ at ([xshift=.36cm,yshift=-.43cm]current page.north west){\insertframetitle};
+ \end{tikzpicture}\vspace{.81cm}}
+\setbeamertemplate{footline}{%
+ \hfill\textcolor{HustRed}{\fontsize{6.2}{7}\selectfont\insertframenumber/\inserttotalframenumber}
+ \hspace{.32cm}\vspace{.10cm}}
+\addtobeamertemplate{footline}{\vspace{.51cm}}{}
+\setlength{\parskip}{.35em}
+\setlength{\abovedisplayskip}{6pt}
+\setlength{\belowdisplayskip}{6pt}
+\newcommand{\src}[1]{\par\vfill{\fontsize{6}{7.2}\selectfont\color{Muted}
+ Đặc tả Direction A v2, mục #1.\par}}
+\newcommand{\smallnote}[1]{\par{\footnotesize\color{Muted}#1\par}}
+\newcommand{\emphline}[1]{\par\medskip{\color{HustRed}\bfseries #1}\par}
+\newcommand{\pop}{\mathrm{pop}}
+\newcommand{\val}{\mathrm{val}}
+\newcommand{\UL}{\mathrm{UL}}
+\newcommand{\DL}{\mathrm{DL}}
+\newcommand{\BH}{\mathrm{BH}}
+\newcommand{\partslide}[2]{%
+ {\setbeamertemplate{background}{\includegraphics[width=\paperwidth,height=\paperheight]{assets/hust/section.png}}
+ \begin{frame}[plain]
+ \vfill\centering
+ {\color{white}\fontsize{13}{16}\selectfont PHẦN #1\par}
+ \vspace{.5cm}
+ {\color{white}\fontsize{23}{28}\selectfont\bfseries #2\par}
+ \vfill
+ \end{frame}}}
+\tikzset{
+ nodebox/.style={draw=HustRed,fill=white,rounded corners=2pt,
+ align=center,inner sep=5pt,font=\small},
+ flow/.style={-{Latex[length=2mm]},draw=HustRed,line width=.8pt},
+ secondary/.style={-{Latex[length=2mm]},draw=Blue,line width=.7pt},
+ labeltext/.style={font=\scriptsize,fill=white,inner sep=2pt,align=center}
+}
+\hypersetup{pdftitle={Direction A v2 - Bài toán UAV-assisted FL và NSGA-II},
+ pdfauthor={MOO-UAV-assisted-FL},pdfsubject={Weekly presentation 12/11/2026}}
+\begin{document}
+
+{\setbeamertemplate{background}{\includegraphics[width=\paperwidth,height=\paperheight]{assets/hust/cover.png}}
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+\node[anchor=north west,inner sep=0pt]
+ at ([xshift=.58cm,yshift=-.55cm]current page.north west)
+ {\includegraphics[width=3.4cm]{assets/hust/logo.png}};
+\node[anchor=north west,text width=10.5cm,align=left,inner sep=0pt,
+ text=HustRed,font=\fontsize{21}{26}\selectfont\bfseries]
+ at ([xshift=.65cm,yshift=-2.1cm]current page.north west)
+ {TỐI ƯU ĐA MỤC TIÊU\\CHO FEDERATED LEARNING\\TRÊN MẠNG CÓ UAV};
+\node[anchor=north west,text width=10.2cm,align=left,inner sep=0pt,
+ text=HustRed,font=\fontsize{13}{17}\selectfont]
+ at ([xshift=.65cm,yshift=-5.1cm]current page.north west)
+ {Direction A v2\\NSGA-II với toán tử xét tập client $D(S)$};
+\node[anchor=north west,inner sep=0pt,font=\small]
+ at ([xshift=.65cm,yshift=-7.3cm]current page.north west)
+ {Báo cáo tuần \quad 12/11/2026};
+\end{tikzpicture}
+\end{frame}}
+
+\begin{frame}[t]{Nội dung}
+\relax
+\vspace{.5cm}
+{\large\color{HustRed}\bfseries 1. Mô hình bài toán}\par
+\vspace{.2cm}
+Kiến trúc UAV-assisted FL, truyền thông, năng lượng,\\
+mục tiêu cuối phiên và ràng buộc mỗi vòng.
+\vspace{.7cm}
+
+{\large\color{HustRed}\bfseries 2. Thuật toán NSGA-II}\par
+\vspace{.2cm}
+Biểu diễn cá thể, matching error $D(S)$, variation theo tập,\\
+reference evaluation và chọn lịch thực thi.
+\src{1--12; bản cập nhật ngày 12/11/2026}
+\end{frame}
+
+\section{Mô hình bài toán}
+\partslide{1}{MÔ HÌNH BÀI TOÁN}
+
+\subsection{Hệ thống và luồng FL}
+\begin{frame}[t]{Kiến trúc mạng và luồng cập nhật}
+\relax
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[nodebox,text width=3.7cm] (s) at (5.4,4.4)
+ {Coordinator\\Global model $w_k$};
+\node[nodebox,text width=2.6cm] (u1) at (2.3,2.6) {UAV 1\\Tổng hợp nhóm};
+\node[nodebox,text width=2.6cm] (u2) at (8.5,2.6) {UAV 2\\Tổng hợp nhóm};
+\node[nodebox,text width=1.7cm] (c1) at (1.1,.7) {Client 1\\$\mathcal D_1$};
+\node[nodebox,text width=1.7cm] (c2) at (3.5,.7) {Client 2\\$\mathcal D_2$};
+\node[nodebox,text width=1.7cm] (c3) at (7.3,.7) {Client 3\\$\mathcal D_3$};
+\node[nodebox,text width=1.7cm] (c4) at (9.7,.7) {Client 4\\$\mathcal D_4$};
+\draw[flow] (c1.north)--(u1.south west);
+\draw[flow] (c2.north)--(u1.south east);
+\draw[flow] (c3.north)--(u2.south west);
+\draw[flow] (c4.north)--(u2.south east);
+\draw[flow] (u1.north)--node[labeltext,above left]{Aggregate} (s.south west);
+\draw[flow] (u2.north)--node[labeltext,above right]{Backhaul} (s.south east);
+\end{tikzpicture}
+\par\raggedright
+Mọi client--UAV đều được phép kết nối. Mỗi client được chọn gán đúng một UAV, mỗi UAV phục vụ nhiều client.
+\smallnote{Sơ đồ minh họa một lịch. Tập tham gia và association có thể đổi qua các vòng.}
+\src{1, 3.3}
+\end{frame}
+
+\begin{frame}[t]{Quyết định và giả thiết cơ sở}
+\relax
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{.99\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Thành phần} & \textbf{Ý nghĩa}\\
+\midrule
+$s_{mu}\in\{0,1\}$ & Client $m$ được chọn và gán tới UAV $u$\\
+$b_{mu}$ (Hz) & Bandwidth uplink được cấp cho liên kết\\
+$f_m$ (cycle/s) & CPU frequency của client\\
+$S_k$ & Tập client tham gia vòng $k$\\
+$K,\ G,\ N_{\rm pop}$ & Số vòng FL, thế hệ và cá thể NSGA-II\\
+\bottomrule
+\end{tabularx}\par
+\medskip
+\begin{itemize}
+\item UAV lơ lửng tại vị trí cố định, $1\le |S_k|\le N_{\max}$.
+\item Kênh hiệu dụng cố định trong vòng, lịch khả thi upload thành công.
+\item Năng lượng gồm compute, radio, aggregation và baseline điện tử.
+\end{itemize}
+\src{1--2}
+\end{frame}
+
+\begin{frame}[t]{Huấn luyện và tổng hợp phân cấp}
+\relax
+Trọng số quần thể cố định theo số mẫu
+\[
+p_m=\frac{n_m}{\sum_j n_j},\qquad
+P_S=\sum_{m\in S}p_m.
+\]
+Mỗi client thực hiện $I$ bước local SGD từ cùng $w_k$
+\[
+w_{m,i+1}^k=w_{m,i}^k-\eta_k\widehat\nabla F_m(w_{m,i}^k),
+\qquad \Delta_m^k=w_{m,I}^k-w_k.
+\]
+\[
+\boxed{\displaystyle
+w_{k+1}=w_k+\sum_{m\in S_k}\frac{p_m}{P_{S_k}}\Delta_m^k}
+\]
+UAV dùng trọng số trong nhóm. Coordinator dùng tổng population mass của mỗi nhóm để tái tạo công thức trên.
+\src{3.1--3.3; công thức V2-01--V2-04}
+\end{frame}
+
+\subsection{Truyền thông và chi phí}
+\begin{frame}[t]{Kênh UAV--client và uplink}
+\relax
+\[
+d_{mu}=\sqrt{(x_u-x_m)^2+(y_u-y_m)^2+H_u^2},
+\quad
+h_{mu}=\beta_{\rm ref}\left(\frac{d_{mu}}{d_{\rm ref}}\right)^{-2}.
+\]
+Các UAV có pool phổ độc lập, client trong một nhóm dùng OFDMA
+\[
+\boxed{\displaystyle
+R_{mu}^{\UL}=\zeta b_{mu}
+\log_2\left(1+\frac{P_m^{RF}h_{mu}}{\Gamma N_0b_{mu}}\right)}
+\]
+\[
+t_m^{\UL}=\frac{L_m^{\UL}}{R_{m,a_m}^{\UL}},
+\qquad E_m^{tx}=P_m^{tx,inc}\,t_m^{\UL}.
+\]
+\smallnote{$P^{RF}$ là công suất RF. $P^{tx,inc}$ là công suất điện tăng thêm dùng tính Joule. $\zeta$ là MAC efficiency, $\Gamma$ là coding gap.}
+\src{4.1--4.2}
+\end{frame}
+
+\begin{frame}[t]{Downlink và backhaul}
+\relax
+Mỗi fixed link có goodput từ tham số radio hoặc số đo
+\[
+r=\zeta B\log_2\left(1+\frac{P^{RF}g}{\Gamma N_0B}\right).
+\]
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{.99\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Pha} & \textbf{Thời lượng}\\
+\midrule
+Coordinator broadcast & $D_0=L_w/\min_{u:y_u=1}r_{0u}^{\DL}$\\
+UAV multicast & $D_u=L_w/\min_{m\in S_u}r_{um}^{\DL}$\\
+UAV backhaul & $H_u=L_u^{\BH}/r_{u0}^{\BH}$ khi $y_u=1$\\
+\bottomrule
+\end{tabularx}\par
+\medskip
+UAV chạy song song trong từng pha
+\[
+D^{\DL}=\max_u D_u,\qquad H=\max_u H_u.
+\]
+\smallnote{Nhóm rỗng có $D_u=H_u=0$. Downlink/backhaul dùng tài nguyên riêng.}
+\src{4.3--4.5}
+\end{frame}
+
+\begin{frame}[t]{Timeline của một vòng FL}
+\relax
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{.99\textwidth}{@{}cYl@{}}
+\toprule
+ & \textbf{Pha tuần tự} & \textbf{Thời gian}\\
+\midrule
+1 & Coordinator broadcast model & $D_0$\\
+2 & UAV multicast model & $D^{\DL}$\\
+3 & Local compute và upload & $d_{\rm svc}$\\
+4 & UAV aggregation & $A$\\
+5 & Backhaul & $H$\\
+6 & Coordinator aggregation & $A_0$\\
+\bottomrule
+\end{tabularx}\par
+\[
+d_{\rm svc}=\max_{m\in S}\left(\frac{C_m}{f_m}+t_m^{\UL}\right)
+\]
+\[
+\boxed{D_k(x)=D_0+D^{\DL}+d_{\rm svc}+A+H+A_0}
+\]
+\src{5.1--5.2}
+\end{frame}
+
+\begin{frame}[t]{Năng lượng client và toàn hệ thống}
+\relax
+Với client tham gia
+\[
+E_m=P_m^{base}D_k+
+\underbrace{\kappa_m C_m f_m^2}_{\text{local compute}}+
+\underbrace{P_m^{rx,inc}D_{a_m}
++P_m^{tx,inc}t_m^{\UL}}_{\text{nhận model và upload}}.
+\]
+Client inactive có năng lượng baseline $P_m^{base}D_k$.
+\medskip
+\[
+\boxed{E_k(x)=\sum_{m=1}^M E_m+\sum_{u=1}^U E_u+E_0}
+\]
+\begin{itemize}
+\item Baseline là công suất nền điện tử.
+\item Các công suất tx/rx/aggregation là phần tăng thêm.
+\item Năng lượng được cộng theo lịch thực thi của từng vòng.
+\end{itemize}
+\src{5.3; công thức V2-14, V2-16}
+\end{frame}
+
+\begin{frame}[t]{Năng lượng UAV và coordinator}
+\relax
+{\small
+\[
+\begin{aligned}
+E_u={}&P_u^{base}D_k+y_u\big(
+P_u^{rx,0,inc}D_0+P_u^{tx,\DL,inc}D_u\\
+&\quad+P_u^{rx,\UL,inc}d_{\rm svc}
++P_u^{agg,inc}A_u+P_u^{tx,\BH,inc}H_u\big).
+\end{aligned}
+\]
+\[
+E_0=P_0^{base}D_k+P_0^{tx,\DL,inc}D_0
++P_0^{rx,\BH,inc}H+P_0^{agg,inc}A_0.
+\]
+}
+\medskip
+Receiver UAV hoạt động trong toàn pha service của nhóm.
+\[
+A_u=y_u(a_u^{(0)}+a_u^{(1)}|S_u|),\quad
+A=\max_u A_u,\quad
+A_0=a_0^{(0)}+a_0^{(1)}\sum_u y_u.
+\]
+\smallnote{Các hệ số aggregation và công suất điện cần được profile hoặc khai báo là synthetic.}
+\src{5.2--5.3}
+\end{frame}
+
+\subsection{Bài toán tối ưu}
+\begin{frame}[t]{Năm nhóm ràng buộc}
+\relax
+{\small
+\[
+\begin{aligned}
+\mathrm{C1}\quad&
+s_{mu}\in\{0,1\},\qquad s_m=\sum_u s_{mu}\le1,\\[.35em]
+\mathrm{C2}\quad&
+1\le \sum_m s_m\le N_{\max},\\[.35em]
+\mathrm{C3}\quad&
+b_{\min}s_{mu}\le b_{mu}\le B_us_{mu},\quad
+\sum_m b_{mu}\le B_u,\\[.35em]
+\mathrm{C4}\quad&
+f_m^{min}s_m\le f_m\le f_m^{max}s_m,\\[.35em]
+\mathrm{C5}\quad&
+D_k(x)\le D_{\max}.
+\end{aligned}
+\]
+}
+\medskip
+C1--C2 giới hạn association và số người tham gia. C3--C4 phân bổ tài nguyên. C5 kiểm soát thời gian vòng.
+\src{6.2; công thức V2-19}
+\end{frame}
+
+\begin{frame}[t]{Mục tiêu cuối phiên và fitness mỗi vòng}
+\relax
+\textbf{Đánh giá sau $K$ vòng FL}
+\[
+\min_\pi\left(
+1-\mathbb E A_{\val}(w_K),\
+\mathbb E\sum_{k=0}^{K-1}E_k,\
+\mathbb E\sum_{k=0}^{K-1}D_k
+\right).
+\]
+\textbf{NSGA-II tại snapshot $k$}
+\[
+\boxed{\min_x\big(\mu_k(S(x)),\,E_k(x),\,D_k(x)\big)}
+\]
+\[
+\mu_k(S)=\mathbb E_\xi L_{\val}
+\left(w_k+\sum_{m\in S}\frac{p_m}{P_S}\Delta_m^k(\xi)\right).
+\]
+Fitness dùng validation cross-entropy trên phân phối mục tiêu. Chọn một lịch mỗi vòng rồi cập nhật model.\par\smallnote{Vòng lặp là heuristic một bước cho mục tiêu cuối phiên, được đánh giá qua các episode hoàn chỉnh.}
+\src{6.1--6.3}
+\end{frame}
+\section{Thuật toán NSGA-II}
+\partslide{2}{THUẬT TOÁN NSGA-II}
+
+\subsection{Biểu diễn và chu trình tìm kiếm}
+\begin{frame}[t]{Chu trình NSGA-II trong một vòng FL}
+\relax
+\centering
+\begin{tikzpicture}[node distance=.36cm]
+\node[nodebox,text width=8.8cm] (init)
+ {Khóa $w_k$, tính gradient guidance, khởi tạo $P_0$};
+\node[nodebox,text width=8.8cm,below=of init] (var)
+ {Tournament, crossover và mutation theo $D(S)$};
+\node[nodebox,text width=8.8cm,below=of var] (eval)
+ {Decode, repair, reference evaluation};
+\node[nodebox,text width=8.8cm,below=of eval] (surv)
+ {Nondominated sorting, crowding, cập nhật archive};
+\node[nodebox,text width=8.8cm,below=of surv] (exec)
+ {Sau $G$ thế hệ, chọn một lịch và thực thi};
+\draw[flow] (init)--(var);
+\draw[flow] (var)--(eval);
+\draw[flow] (eval)--(surv);
+\draw[flow] (surv)--(exec);
+\draw[secondary] (surv.east)--++(.65,0)|-
+ node[labeltext,pos=.7,right]{$G$ thế hệ} (var.east);
+\end{tikzpicture}
+\src{9.1--9.8}
+\end{frame}
+
+\begin{frame}[t]{Cá thể gồm ba vector}
+\relax
+\[
+x=(a,\rho,\nu),\qquad a_m\in\{0,\ldots,U\},
+\quad \rho_m,\nu_m\in[0,1].
+\]
+\begin{itemize}
+\item $a_m=0$ là inactive, $a_m=u$ là chọn UAV $u$.
+\item $\rho_m$ phân chia bandwidth, $\nu_m$ điều khiển CPU.
+\end{itemize}
+Với $n_u=|S_u|$ và $m\in S_u$
+\[
+z_m=\frac{\rho_m+\epsilon_\rho}
+{\sum_{j\in S_u}(\rho_j+\epsilon_\rho)},\qquad
+b_{mu}=b_{\min}+(B_u-n_ub_{\min})z_m.
+\]
+\[
+f_m=f_m^{min}+\nu_m(f_m^{max}-f_m^{min}).
+\]
+\smallnote{Decoder cần $n_ub_{\min}\le B_u$. Client inactive nhận bandwidth và CPU bằng 0.}
+\src{8.1}
+\end{frame}
+
+\subsection{Matching error và tính set-dependent}
+\begin{frame}[t]{Matching error của tập client}
+\relax
+Tại cùng checkpoint $w_k$, đặt
+\[
+g_m=\nabla F_m(w_k),\qquad
+g_{\pop}=\sum_m p_mg_m,\qquad
+g_S=\sum_{m\in S}\frac{p_m}{P_S}g_m.
+\]
+\[
+\boxed{\displaystyle D(S)=\|g_S-g_{\pop}\|_2^2}
+\]
+\begin{itemize}
+\item $D(S)$ đo sai lệch gradient của tập so với quần thể.
+\item Giá trị của client phụ thuộc vào những client đã có trong $S$.
+\item Thêm hoặc bỏ client làm thay đổi cả gradient trung bình và trọng số.
+\end{itemize}
+\smallnote{$D(S)$ là matching error. $D_k(x)$ trong phần trước là thời gian của lịch.}
+\src{7.1; công thức V2-20}
+\end{frame}
+
+\begin{frame}[t]{Các hạng tương tác giữa client}
+\relax
+Đặt $c_m=g_m-g_{\pop}$ và $\alpha_m=p_m/P_S$
+\[
+\boxed{\begin{aligned}
+D(S)={}&\sum_{m\in S}\alpha_m^2\|c_m\|^2\\
+&+2\sum_{\substack{i<j\\i,j\in S}}
+\alpha_i\alpha_j\langle c_i,c_j\rangle.
+\end{aligned}}
+\]
+\medskip
+\begin{itemize}
+\item Cross terms biểu diễn tương tác giữa gradient bias của các client.
+\item Tích vô hướng âm có thể giúp các sai lệch bù nhau.
+\item Trọng số $\alpha_m(S)$ đổi theo thành phần của tập.
+\end{itemize}
+\emphline{Toán tử sinh nghiệm dùng marginal theo tập hiện tại.}
+\src{7.2; công thức V2-21}
+\end{frame}
+
+\begin{frame}[t]{Ví dụ về hai client bổ trợ nhau}
+\relax
+Ba client có trọng số bằng nhau
+\[
+(g_1,g_2,g_3)=(2,-2,1),\qquad g_{\pop}=\frac13.
+\]
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{.99\textwidth}{@{}lYY@{}}
+\toprule
+\textbf{Tập client} & \textbf{Gradient $g_S$} & \textbf{Matching error $D(S)$}\\
+\midrule
+$\{1,2\}$ & $0$ & $\mathbf{1/9}\approx\mathbf{0.111}$\\
+$\{1,3\}$ & $3/2$ & $49/36\approx1.361$\\
+$\{2,3\}$ & $-1/2$ & $25/36\approx0.694$\\
+\bottomrule
+\end{tabularx}\par
+\medskip
+Client 1 và 2 có gradient trái dấu. Khi chọn cùng nhau, sai lệch trung bình gần gradient quần thể nhất trong ba cặp.
+\smallnote{Ví dụ minh họa matching error tại một checkpoint.}
+\src{7.2; công thức V2-22}
+\end{frame}
+
+\begin{frame}[t]{Marginal khi add hoặc drop}
+\relax
+Đặt $r_S=g_S-g_{\pop}$. Khi thêm $j\notin S$
+\[
+t=\frac{p_j}{P_S+p_j},\quad v=g_j-g_S,
+\qquad
+\boxed{D(S+j)-D(S)=2t\langle r_S,v\rangle+t^2\|v\|^2}.
+\]
+Khi bỏ $i\in S$, với $|S|\ge2$
+\[
+t_i=\frac{p_i}{P_S-p_i},\quad v_i=g_S-g_i,
+\]
+\[
+\boxed{D(S-i)-D(S)=2t_i\langle r_S,v_i\rangle+t_i^2\|v_i\|^2}.
+\]
+\smallnote{Marginal âm làm giảm matching error. Add cần $|S|<N_{\max}$, drop cần $|S|>1$.}
+\src{7.3; công thức V2-23--V2-24}
+\end{frame}
+
+\begin{frame}[t]{Marginal khi swap và vai trò reassign}
+\relax
+Đổi $i\in S$ lấy $j\notin S$
+\[
+\delta_{ij}(S)=
+\frac{p_j(g_j-g_S)-p_i(g_i-g_S)}
+{P_S-p_i+p_j}.
+\]
+\[
+\boxed{\displaystyle
+D(S-i+j)-D(S)=2\langle r_S,\delta_{ij}\rangle+\|\delta_{ij}\|^2}
+\]
+\medskip
+\begin{itemize}
+\item Swap giữ số client và thay đổi quan hệ bổ trợ trong tập.
+\item Reassign giữ $S$ và $D(S)$ trong mô hình cơ sở.
+\item Reassign thay đổi rate, energy và thời gian qua association UAV.
+\end{itemize}
+\src{7.3; công thức V2-25}
+\end{frame}
+
+\begin{frame}[t]{Liên hệ giữa $D(S)$ và learning progress}
+\relax
+Xét một bước gradient chính xác
+\[
+w^+=w-\gamma g_S,\qquad 0<\gamma\le1/L,
+\]
+với $F$ là $L$-smooth và $\nabla F(w)=g_{\pop}$.
+\[
+\boxed{\displaystyle
+F(w^+)\le F(w)-\frac{\gamma}{2}\|g_{\pop}\|^2
++\frac{\gamma}{2}D(S)}
+\]
+\medskip
+$D(S)$ xuất hiện như một hạng selection error trong cận giảm training loss.
+\medskip
+
+Với nhiều bước local SGD, update còn có local drift và noise. NSGA-II kiểm tra chất lượng học bằng validation loss sau training và aggregation.
+\src{7.4; công thức V2-26}
+\end{frame}
+
+\subsection{Variation, evaluation và thực thi}
+\begin{frame}[t]{Mutation theo tập hiện tại}
+\relax
+\begin{enumerate}
+\setlength{\itemsep}{.55em}
+\item Với xác suất $p_{\rm set}$, tạo shortlist add/drop/swap.
+\item Tính marginal $D(S)$ cho từng move.
+\item Gán UAV, decode tài nguyên và repair.
+\item Tính lại $D$ trên tập \textbf{sau repair}.
+\item Chọn proposal có $D$ thấp nhất, trộn random exploration.
+\item Đánh giá proposal bằng loss thực, energy và time.
+\end{enumerate}
+\medskip
+Duy trì $P_S$ và $\sum_{m\in S}p_mg_m$ giúp tính marginal nhanh. Guidance được tính một lần tại snapshot và tính vào search cost.
+\src{7.5, 9.4}
+\end{frame}
+
+\begin{frame}[t]{Crossover, generic mutation và repair}
+\relax
+{\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{.99\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Thành phần} & \textbf{Thao tác}\\
+\midrule
+Assignment crossover & Kế thừa intersection, lấy thêm từ symmetric difference\\
+Resource crossover & Bounded SBX trên $\rho,\nu$\\
+Generic mutation & Add, drop, swap hoặc reassign khi khả dụng\\
+Resource mutation & Polynomial mutation trong $[0,1]$\\
+Repair & Cardinality, capacity nhóm, resource bounds, deadline\\
+\bottomrule
+\end{tabularx}\par
+}
+\medskip
+\[
+c_u=\left\lfloor\frac{B_u}{b_{\min}}\right\rfloor,\qquad
+CV(x)=\sum_j\frac{\max(0,g_j(x))}{\sigma_j}.
+\]
+Các scale $\sigma_j$ có cùng đơn vị với residual. Feasible được ưu tiên, hai infeasible so theo $CV$.
+\src{8.2--8.3, 9.2--9.3}
+\end{frame}
+
+\begin{frame}[t]{Reference evaluation và cache}
+\relax
+Mỗi candidate khả thi được mô phỏng từ cùng checkpoint
+\[
+\widehat\mu_k(S)=\frac1{R_{\rm search}}
+\sum_{r=1}^{R_{\rm search}}
+L_{\val,\rm search}(w_{k+1}(S;\xi_r)).
+\]
+\begin{itemize}
+\setlength{\itemsep}{.5em}
+\item Cache local update theo checkpoint, client, seed và local config.
+\item Cache set-loss theo $S$, snapshot và validation protocol.
+\item Các resource variants cùng $S$ chia sẻ learning evaluation.
+\item Search giữ checkpoint bất biến. Execution dùng seed độc lập.
+\end{itemize}
+\smallnote{Gradient guidance và các phép thử phản thực tế thuộc chi phí search offline.}
+\src{6.3, 9.5}
+\end{frame}
+
+\begin{frame}[t]{Survival và archive của NSGA-II}
+\relax
+\[
+R_g=P_g\cup Q_g,\qquad |R_g|=2N_{\rm pop}.
+\]
+\begin{enumerate}
+\setlength{\itemsep}{.6em}
+\item Constrained nondominated sorting trên ba objective.
+\item Giữ các front theo rank tăng dần.
+\item Cắt front cuối bằng crowding distance.
+\item Cập nhật archive các lịch khả thi không bị trội.
+\end{enumerate}
+\medskip
+$D(S)$ hướng dẫn proposal. Loss sau aggregation, $E_k(x)$ và $D_k(x)$ quyết định survival.
+\smallnote{Crowding của objective có range bằng 0 đóng góp bằng 0. Archive thuộc cùng snapshot và giao thức đánh giá.}
+\src{9.6}
+\end{frame}
+
+\begin{frame}[t]{Chọn lịch và cập nhật phiên FL}
+\relax
+Preference $\lambda_j\ge0$, $\sum_j\lambda_j=1$ và scales $c_j>0$ được khóa trước run
+\[
+\boxed{\displaystyle
+x_k^\star=\arg\min_{x\in\mathcal A_k}
+\left[
+\lambda_L\frac{\widehat\mu_k(S(x))}{c_L}
++\lambda_E\frac{E_k(x)}{c_E}
++\lambda_D\frac{D_k(x)}{c_D}
+\right]}
+\]
+\begin{itemize}
+\item Thực thi một lịch với seed độc lập, aggregate thành $w_{k+1}$.
+\item Cộng energy/time thực thi và cập nhật $\tau_{k+1}$.
+\item Sang snapshot mới, đánh giá lại các candidate theo $w_{k+1}$.
+\item Archive rỗng kích hoạt fallback đã kiểm tra hoặc ghi nhận dừng sớm.
+\end{itemize}
+\src{5.4, 9.7}
+\end{frame}
+
+\begin{frame}[t]{Mã giả của toàn bộ phiên}
+\relax
+{\small
+\begin{tabbing}
+\hspace{.4cm}\=\hspace{.4cm}\=\kill
+\textbf{for} $k=0,\ldots,K-1$\\[.3em]
+\> Khóa snapshot $X_k$, tính gradient guidance\\
+\> Khởi tạo, decode/repair và đánh giá $P_0$\\[.3em]
+\> \textbf{for} $g=0,\ldots,G-1$\\
+\>\> Tournament và crossover\\
+\>\> Mutation theo $D(S)$ hoặc generic mutation\\
+\>\> Decode/repair và reference evaluation\\
+\>\> Rank/crowding, chọn survivors, cập nhật archive\\[.3em]
+\> Chọn và khóa $x_k^\star$ theo preference\\
+\> Thực thi, aggregate, cập nhật model và chi phí\\[.3em]
+Đánh giá model cuối, tổng energy/time và số vòng hoàn tất
+\end{tabbing}
+}
+\src{9.8}
+\end{frame}
+
+\begin{frame}[t]{Kiểm chứng đóng góp set-dependent}
+\relax
+Cùng nguồn gradient, evaluator, allocator và ngân sách thực\par\medskip
+{\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{.99\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Đối chứng} & \textbf{Cách tạo selected set}\\
+\midrule
+Generic NSGA-II & Random add/drop/swap/reassign\\
+Individual-score & Score client cố định tại snapshot\\
+Set-dependent & Marginal $D(S)$ theo tập hiện tại\\
+\bottomrule
+\end{tabularx}\par
+}
+\medskip
+\begin{itemize}
+\item Đo accuracy/loss cuối, tổng energy/time và search cost.
+\item Theo dõi mức giảm $D$, actual loss và guided offspring sống sót.
+\item So sánh episode hoàn chỉnh với cùng preference.
+\end{itemize}
+\smallnote{Giả thuyết cần kiểm nghiệm là marginal theo tập giúp cải thiện kết quả dưới cùng chi phí đánh giá.}
+\src{7.6, 10.3}
+\end{frame}
+
+\end{document}

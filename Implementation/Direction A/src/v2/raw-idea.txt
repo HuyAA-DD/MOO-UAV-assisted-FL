@@ -1,7 +1,18 @@
-- Mô hình bài toán đơn giản : m client mặt đất đứng yên, n UAV lơ lửng, trạm server
-- Kế thừa các mô hình toán học của bài báo gốc
-- Mỗi round chỉ có đúng n client tham gia vào việc training
--> solution encoding : dãy n duy nhất.
--> Tận dụng FCSGA
-- Cần xử lí : client selection, resource allocation band-width 
-- Tối ưu đa mục tiêu : Độ chính xác, năng lượng, thời gian
+- m client mặt đất, n UAV lơ lửng trạm server
+- 1 client truyền dữ liệu cho đúng 1 UAV
+- 1 UAV có thể tổng hợp từ nhiều client
+- không có probing
+- tối ưu đa mục tiêu nhưng chỉ qtam kết quả round cuối : Độ chính xác, năng lượng, thời gian
+- Các mô hình năng lượng + truyền thông kế thừa từ docs\developing directions\JNCA_Huy.pdf
+- Giới hạn Băng thông B_u cho UAV, (f_min,f_max) cho cpu frequency
+- Mỗi round có tối đa N_max 
+- cá thể đại diện bởi 3 vector (s,b,f) 
+- crossover, mutation, ... (chưa thiết kế kĩ, đã dc gợi ý các thao tác add,drop,swap,reassign)
+- Mã giả :
+for(T vòng FL)
+    Khởi tạo quẩn thể P0 của NSGA
+    for(G vòng NSGA-II)
+        crossover + mutation
+        decode + repair
+        reference evaluation (L_val,E,T)
+    chọn 1 cá thể để sang vòng FL tiếp theo 
